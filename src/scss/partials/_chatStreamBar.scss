@@ -1,0 +1,58 @@
+.stream-bar {
+  z-index: 1;
+  width: 100%;
+  border-top: 1px solid #E6EAED;
+  position: relative;
+
+  &-gradient {
+    border-radius: 4px;
+    height: 42px;
+    width: 100%;
+    background: linear-gradient(90deg, #4588E3 0.79%, #976FFF 54.33%, #E46ACE 97.09%);
+  }
+
+  &-plate {
+    height: 100%;
+    width: 100%;
+    background: #E5E5E5;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+    mix-blend-mode: screen;
+  }
+
+  &-line {
+    background: black;
+    width: 3px;
+    height: 100%;
+  }
+
+  &-text {
+    font-size: 14px;
+    flex: 1;
+    padding: 0 6px;
+  }
+
+  &-title {
+    color: black;
+    font-weight: bold;
+    line-height: 18px;
+  }
+
+  &-viewers {
+    color: black;
+    line-height: 18px;
+  }
+
+  &-button {
+    background: black;
+    color: white;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 14px;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 6px 8px;
+  }
+}

@@ -45,6 +45,7 @@ import getDialogKey from '../../lib/appManagers/utils/dialogs/getDialogKey';
 import getHistoryStorageKey from '../../lib/appManagers/utils/messages/getHistoryStorageKey';
 import isForwardOfForward from '../../lib/appManagers/utils/messages/isForwardOfForward';
 import getPeerId from '../../lib/appManagers/utils/peers/getPeerId';
+import ChatStreamBar from './streamBar';
 
 export enum ChatType {
   Chat = 'chat',
@@ -62,6 +63,7 @@ export default class Chat extends EventListenerBase<{
   public backgroundEl: HTMLElement;
 
   public topbar: ChatTopbar;
+  public streamBar: ChatStreamBar;
   public bubbles: ChatBubbles;
   public input: ChatInput;
   public selection: ChatSelection;
@@ -341,6 +343,7 @@ export default class Chat extends EventListenerBase<{
     // this.initPeerId = peerId;
 
     this.topbar = new ChatTopbar(this, appSidebarRight, this.managers);
+    this.streamBar = new ChatStreamBar(this, this.managers);
     this.bubbles = new ChatBubbles(this, this.managers);
     this.input = new ChatInput(this, this.appImManager, this.managers, 'chat-input-main');
     this.contextMenu = new ChatContextMenu(this, this.managers);
@@ -361,7 +364,7 @@ export default class Chat extends EventListenerBase<{
 
     this.bubbles.attachContainerListeners();
 
-    this.container.append(this.topbar.container, this.bubbles.container, this.input.chatInput);
+    this.container.append(this.topbar.container, this.streamBar.container, this.bubbles.container, this.input.chatInput);
 
     this.bubbles.listenerSetter.add(rootScope)('dialog_migrate', ({migrateFrom, migrateTo}) => {
       if(this.peerId === migrateFrom) {
@@ -453,6 +456,7 @@ export default class Chat extends EventListenerBase<{
     this.input?.cleanup(helperToo);
     this.topbar?.cleanup();
     this.selection?.cleanup();
+    this.streamBar?.cleanup();
   }
 
   public get isForumTopic() {
@@ -633,7 +637,8 @@ export default class Chat extends EventListenerBase<{
       this.topbar?.finishPeerChange(options),
       this.bubbles?.finishPeerChange(),
       this.input?.finishPeerChange(options),
-      sharedMediaTab?.fillProfileElements()
+      sharedMediaTab?.fillProfileElements(),
+      this.streamBar?.finishPeerChange(peerId)
     ]);
 
     const callbacks = await callbacksPromise;
