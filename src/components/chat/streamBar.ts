@@ -9,14 +9,20 @@ export default class ChatStreamBar {
   public container: HTMLDivElement;
   private watchingCounter: HTMLDivElement;
 
+  private callId?: string | number;
+
   constructor(
     private chat: Chat,
     private managers: AppManagers
   ) {
     const listenerSetter = new ListenerSetter();
 
-    listenerSetter.add(rootScope)('group_call_update', (groupCall) => {
-      this.updateCall(groupCall);
+    listenerSetter.add(rootScope)('group_call_update', async(groupCall) => {
+      if(!this.callId) {
+        this.callId = await this.getCallIdByPeerId(this.chat.peerId);
+      }
+
+      await this.updateCall(groupCall);
     });
 
     this.container = document.createElement('div');
@@ -55,11 +61,10 @@ export default class ChatStreamBar {
   }
 
   public async finishPeerChange(peerId: PeerId) {
-    const chatFull = peerId.isAnyChat() ?
-      await this.managers.appProfileManager.getChatFull(peerId.toChatId()) :
-      undefined;
-    const call = chatFull?.call?.id ?
-      await this.managers.appGroupCallsManager.getGroupCallFull(chatFull.call.id) :
+    this.callId = await this.getCallIdByPeerId(peerId);
+
+    const call = this.callId ?
+      await this.managers.appGroupCallsManager.getGroupCallFull(this.callId) :
       undefined;
 
     return () => {
@@ -69,18 +74,34 @@ export default class ChatStreamBar {
 
   public cleanup() {
     if(!this.chat.peerId) {
-      this.container.classList.add('hide');
+      this.hide();
     }
   }
 
-  private updateCall(groupCall?: GroupCall) {
-    const isLiveStream = groupCall?._ === 'groupCall' && this.chat.isBroadcast // && groupCall.pFlags.rtmp_stream
+  private async getCallIdByPeerId(peerId: PeerId) {
+    if(!peerId || !peerId.isAnyChat()) return;
+
+    const chatFull = await this.managers.appProfileManager.getChatFull(peerId.toChatId());
+    return chatFull?.call?.id;
+  }
+
+  private async updateCall(groupCall?: GroupCall) {
+    if(this.callId !== groupCall?.id) return
+
+    const isLiveStream = groupCall?._ === 'groupCall' && groupCall.pFlags.rtmp_stream
     if(groupCall && isLiveStream) {
+      const participantsCount = Math.max(0, groupCall.participants_count);
+
       this.container.classList.remove('hide');
       // _i18n(this.watchingCounter, 'LiveStream.Status.Participants', [groupCall.participants_count]);
-      this.watchingCounter.innerText = `${groupCall.participants_count} watching`;
+      this.watchingCounter.innerText = `${participantsCount} watching`;
     } else {
-      this.container.classList.add('hide');
+      this.hide();
     }
+  }
+
+  private hide() {
+    this.container.classList.add('hide');
+    this.callId = undefined;
   }
 }
