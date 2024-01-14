@@ -1,0 +1,91 @@
+.stream-player {
+  position: absolute;
+  width: 1080px;
+  height: 608px;
+  background: black;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10px;
+  overflow: hidden;
+
+  &-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    &-thumb {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--thumb) center center / cover;
+      overflow: hidden;
+    }
+
+    &-thumb-blur {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.50);
+      backdrop-filter: blur(50px);
+      opacity: 1;
+      transition: opacity 0.3s ease-in-out;
+
+      &.hidden {
+        opacity: 0;
+      }
+    }
+
+    &-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &-live-badge {
+    background: #636363;
+    padding: 2px 6px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    font-family: 'Roboto Condensed', 'Roboto', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    transition: background-image 0.3s ease-in-out;
+
+    &.playing {
+      background: linear-gradient(75deg, #4588E3 -79.42%, #976FFF 20.35%, #E46ACE 100.03%), #EA3323;
+    }
+  }
+
+  &-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .btn-icon {
+      color: white;
+    }
+
+    &-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 16px;
+    }
+  }
+}

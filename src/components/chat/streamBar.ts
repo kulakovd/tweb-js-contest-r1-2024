@@ -4,6 +4,8 @@ import {GroupCall} from '../../layer';
 import ListenerSetter from '../../helpers/listenerSetter';
 import rootScope from '../../lib/rootScope';
 import Chat from './chat';
+import LiveStreamViewer from '../liveStreamViewer';
+import {attachClickEvent} from '../../helpers/dom/clickEvent';
 
 export default class ChatStreamBar {
   public container: HTMLDivElement;
@@ -55,6 +57,13 @@ export default class ChatStreamBar {
     joinBtn.classList.add('stream-bar-button');
     // _i18n(joinBtn, 'LiveStream.Action.Join');
     joinBtn.innerText = 'Join';
+
+    attachClickEvent(joinBtn, () => {
+      new LiveStreamViewer().open({
+        fromId: this.chat.peerId,
+        userCaption: 'streaming' // i18n?
+      })
+    });
 
     plate.append(line, liveSteamText, joinBtn);
     this.container.append(gradient);
