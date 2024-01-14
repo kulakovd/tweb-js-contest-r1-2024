@@ -4,12 +4,26 @@ import {GroupCall} from '../../layer';
 import ListenerSetter from '../../helpers/listenerSetter';
 import rootScope from '../../lib/rootScope';
 import Chat from './chat';
-import LiveStreamViewer from '../liveStreamViewer';
 import {attachClickEvent} from '../../helpers/dom/clickEvent';
+import LiveStreamViewer from '../liveStreamViewer';
+import {ShineAnimationCanvas} from '../shineAnimationCanvas';
+
+const JOIN_BTN_ANIMATION_DELAY = 1000;
 
 export default class ChatStreamBar {
   public container: HTMLDivElement;
   private watchingCounter: HTMLDivElement;
+  private joinAnimation: ShineAnimationCanvas = new ShineAnimationCanvas(
+    'stream-bar-button-animation',
+    {
+      border: 2,
+      borderRadius: 12,
+      gradientWidth: 50,
+      blur: 0,
+      animationDuration: 1000,
+      innerShine: false
+    }
+  );
 
   private callId?: string | number;
 
@@ -20,15 +34,18 @@ export default class ChatStreamBar {
     const listenerSetter = new ListenerSetter();
 
     listenerSetter.add(rootScope)('group_call_update', async(groupCall) => {
+      let animateBtn = false;
+
       if(!this.callId) {
         this.callId = await this.getCallIdByPeerId(this.chat.peerId);
+        animateBtn = true;
       }
 
-      await this.updateCall(groupCall);
+      await this.updateCall(groupCall, animateBtn);
     });
 
     this.container = document.createElement('div');
-    this.container.classList.add('sidebar-header', 'stream-bar');
+    this.container.classList.add('sidebar-header', 'stream-bar', 'hide');
 
     const gradient = document.createElement('div');
     gradient.classList.add('stream-bar-gradient');
@@ -57,6 +74,7 @@ export default class ChatStreamBar {
     joinBtn.classList.add('stream-bar-button');
     // _i18n(joinBtn, 'LiveStream.Action.Join');
     joinBtn.innerText = 'Join';
+    joinBtn.append(this.joinAnimation.canvas);
 
     attachClickEvent(joinBtn, () => {
       new LiveStreamViewer().open({
@@ -77,7 +95,7 @@ export default class ChatStreamBar {
       undefined;
 
     return () => {
-      this.updateCall(call);
+      this.updateCall(call, call !== undefined);
     }
   }
 
@@ -94,7 +112,7 @@ export default class ChatStreamBar {
     return chatFull?.call?.id;
   }
 
-  private async updateCall(groupCall?: GroupCall) {
+  private async updateCall(groupCall?: GroupCall, animateBtn?: boolean) {
     if(this.callId !== groupCall?.id) return
 
     const isLiveStream = groupCall?._ === 'groupCall' && groupCall.pFlags.rtmp_stream
@@ -104,6 +122,10 @@ export default class ChatStreamBar {
       this.container.classList.remove('hide');
       // _i18n(this.watchingCounter, 'LiveStream.Status.Participants', [groupCall.participants_count]);
       this.watchingCounter.innerText = `${participantsCount} watching`;
+
+      if(animateBtn) {
+        await this.joinAnimation.runOnce(JOIN_BTN_ANIMATION_DELAY);
+      }
     } else {
       this.hide();
     }
