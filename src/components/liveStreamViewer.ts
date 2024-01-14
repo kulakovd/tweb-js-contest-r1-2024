@@ -5,11 +5,8 @@ import liteMode from '../helpers/liteMode';
 import {AppMediaViewerUnderlay} from './appMediaViewerUnderlay';
 import ButtonIcon from './buttonIcon';
 import {ShineAnimationCanvas} from './shineAnimationCanvas';
-import {getMiddleware} from '../helpers/middleware';
 import rootScope from '../lib/rootScope';
-import setAttachmentSize from '../helpers/setAttachmentSize';
-import {Photo, PhotoSize} from '../layer';
-import getMediaThumbIfNeeded from '../helpers/getStrippedThumbIfNeeded';
+import {PhotoSize} from '../layer';
 import appDownloadManager from '../lib/appManagers/appDownloadManager';
 
 export default class LiveStreamViewer {
@@ -20,9 +17,6 @@ export default class LiveStreamViewer {
   private thumb: HTMLDivElement;
   private thumbBlur: HTMLDivElement;
   private watchingCounter: HTMLDivElement;
-
-  private middlewareHelper: ReturnType<typeof getMiddleware>;
-  private avatarMiddlewareHelper: ReturnType<typeof getMiddleware>;
 
   private isPlaying: boolean = false;
 
@@ -38,8 +32,6 @@ export default class LiveStreamViewer {
   );
 
   constructor() {
-    this.middlewareHelper = getMiddleware();
-
     this.underlay = new AppMediaViewerUnderlay(['forward']);
     this.underlay.onClick = this.onClick;
     this.underlay.onClose = this.close.bind(this);
