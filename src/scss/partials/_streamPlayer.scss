@@ -9,6 +9,17 @@
   transform: translate(-50%, -50%);
   border-radius: 10px;
   overflow: hidden;
+  transition: opacity 0.3s ease-in-out;
+
+  &.hidden {
+    opacity: 0;
+  }
+
+  &-video {
+    position: absolute;
+    width: 1080px;
+    height: 608px;
+  }
 
   &-loading {
     position: absolute;
@@ -16,6 +27,12 @@
     left: 0;
     width: 100%;
     height: 100%;
+    z-index: 3;
+    transition: opacity 0.3s ease-in-out;
+
+    &.hidden {
+      opacity: 0;
+    }
 
     &-thumb {
       position: absolute;
@@ -36,11 +53,6 @@
       background: rgba(0, 0, 0, 0.50);
       backdrop-filter: blur(50px);
       opacity: 1;
-      transition: opacity 0.3s ease-in-out;
-
-      &.hidden {
-        opacity: 0;
-      }
     }
 
     &-canvas {
@@ -76,6 +88,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    z-index: 4;
 
     .btn-icon {
       color: white;

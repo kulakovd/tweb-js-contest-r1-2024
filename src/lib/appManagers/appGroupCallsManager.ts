@@ -17,6 +17,7 @@ import {logger} from '../logger';
 import {NULL_PEER_ID} from '../mtproto/mtproto_config';
 import {AppManager} from './manager';
 import getPeerId from './utils/peers/getPeerId';
+import {DcId} from '../../types';
 
 export type GroupCallId = GroupCall['id'];
 export type MyGroupCall = GroupCall | InputGroupCall;
@@ -380,5 +381,37 @@ export class AppGroupCallsManager extends AppManager {
     }).then((updates) => {
       this.apiUpdatesManager.processUpdateMessage(updates);
     });
+  }
+
+  public getGroupCallStreamChannels(groupCallId: GroupCallId, dcId: DcId) {
+    return this.apiManager.invokeApi('phone.getGroupCallStreamChannels', {
+      call: this.getGroupCallInput(groupCallId)
+    }, {
+      dcId
+    });
+  }
+
+  public getGroupCallStreamChunk(
+    dcId: DcId,
+    groupCall: GroupCall,
+    timeMs: string,
+    scale: number,
+    videoChannel: number,
+    videoQuality: number
+  ) {
+    return this.apiManager.invokeApi('upload.getFile', {
+      location: {
+        _: 'inputGroupCallStream',
+        call: this.getGroupCallInput(groupCall.id),
+        time_ms: timeMs,
+        scale,
+        video_channel: videoChannel,
+        video_quality: videoQuality
+      },
+      offset: 0,
+      limit: 128 * 1024
+    }, {
+      dcId
+    })
   }
 }

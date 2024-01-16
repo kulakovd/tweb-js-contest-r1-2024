@@ -116,6 +116,8 @@ import safePlay from '../../helpers/dom/safePlay';
 import {RequestWebViewOptions} from './appAttachMenuBotsManager';
 import PopupWebApp from '../../components/popups/webApp';
 import {getPeerColorIndexByPeer, getPeerColorsByPeer, setPeerColors} from './utils/peers/getPeerColorById';
+import liveStreamController from '../calls/liveStreamController';
+import LiveStreamViewer from '../../components/liveStreamViewer';
 
 export type ChatSavedPosition = {
   mids: number[],
@@ -1431,7 +1433,14 @@ export class AppImManager extends EventListenerBase<{
         call = chatFull.call;
       }
 
-      groupCallsController.joinGroupCall(chatId, call.id, true, false);
+      const fullCall = await this.managers.appGroupCallsManager.getGroupCallFull(call.id);
+      const isLiveStream = fullCall?._ === 'groupCall' && fullCall.pFlags.rtmp_stream
+      if(isLiveStream) {
+        const connectionPromise = liveStreamController.joinLiveStream(call.id);
+        new LiveStreamViewer(connectionPromise).open(peerId)
+      } else {
+        groupCallsController.joinGroupCall(chatId, call.id, true, false);
+      }
     };
 
     if(groupCallId) {

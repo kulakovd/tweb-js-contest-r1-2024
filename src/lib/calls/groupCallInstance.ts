@@ -28,6 +28,7 @@ import {Ssrc} from './types';
 import getPeerId from '../appManagers/utils/peers/getPeerId';
 import {AppManagers} from '../appManagers/managers';
 import {generateSelfVideo, makeSsrcFromParticipant, makeSsrcsFromParticipant} from './groupCallsController';
+import LiveStreamInstance from './liveStreamInstance';
 
 export default class GroupCallInstance extends CallInstanceBase<{
   state: (state: GROUP_CALL_STATE) => void,

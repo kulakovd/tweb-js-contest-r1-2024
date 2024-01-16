@@ -6,17 +6,24 @@ import {AppMediaViewerUnderlay} from './appMediaViewerUnderlay';
 import ButtonIcon from './buttonIcon';
 import {ShineAnimationCanvas} from './shineAnimationCanvas';
 import rootScope from '../lib/rootScope';
-import {PhotoSize} from '../layer';
+import {GroupCall, PhotoSize} from '../layer';
 import appDownloadManager from '../lib/appManagers/appDownloadManager';
+import ListenerSetter from '../helpers/listenerSetter';
+import liveStreamController from '../lib/calls/liveStreamController';
 
 export default class LiveStreamViewer {
   protected navigationItem: NavigationItem;
   protected underlay: AppMediaViewerUnderlay<'forward'>;
 
-  private liveBadge: HTMLDivElement;
+  private streamPlayer: HTMLDivElement;
+  private loadingContainer: HTMLDivElement;
   private thumb: HTMLDivElement;
-  private thumbBlur: HTMLDivElement;
+
+  private liveBadge: HTMLDivElement;
   private watchingCounter: HTMLDivElement;
+
+  private video1: HTMLVideoElement;
+  private video2: HTMLVideoElement;
 
   private isPlaying: boolean = false;
 
@@ -31,16 +38,91 @@ export default class LiveStreamViewer {
     }
   );
 
-  constructor() {
+  constructor(connectionPromise: Promise<void>) {
+    const listenerSetter = new ListenerSetter();
+
+    listenerSetter.add(rootScope)('group_call_update', this.updateCall.bind(this));
+
     this.underlay = new AppMediaViewerUnderlay(['forward']);
     this.underlay.onClick = this.onClick;
     this.underlay.onClose = this.close.bind(this);
     this.underlay.setListeners();
 
-    const streamPlayer = this.createStreamPlayer();
-    this.underlay.append(streamPlayer);
+    this.streamPlayer = this.createStreamPlayer();
+    this.underlay.append(this.streamPlayer);
+
+    this.video1.preload = 'auto';
+    this.video2.preload = 'auto';
 
     this.loadingAnimation.runInfinite();
+
+    connectionPromise.then(() => {
+      this.updateCall(liveStreamController.groupCall);
+      this.play();
+    });
+  }
+
+  private updateCall(groupCall: GroupCall) {
+    if(liveStreamController.groupCall.id !== groupCall.id) return;
+
+    if(groupCall?._ === 'groupCall') {
+      const participantsCount = Math.max(0, groupCall.participants_count);
+
+      this.watchingCounter.innerText = `${participantsCount} watching`;
+    }
+  }
+
+  private async play() {
+    let currentVideo = this.video1;
+    let nextVideo = this.video2;
+
+    currentVideo.style.zIndex = '2';
+    nextVideo.style.zIndex = '1';
+
+    function switchVideo() {
+      [currentVideo, nextVideo] = [nextVideo, currentVideo];
+
+      currentVideo.style.zIndex = '2';
+      nextVideo.style.zIndex = '1';
+    }
+
+    const liveStream = liveStreamController.liveStream;
+
+    if(!liveStream) {
+      return;
+    }
+
+    await liveStream.initStream()
+    await liveStream.waitForBuffer();
+    this.onStartPlaying();
+
+    const endedListener = segmentEnded.bind(this);
+    async function segmentEnded(this: LiveStreamViewer) {
+      currentVideo.removeEventListener('ended', endedListener);
+
+      this.setThumbFromFrame(currentVideo);
+      this.onStopPlaying();
+
+      await liveStream.onChunkPlayed();
+      await liveStream.waitForBuffer();
+
+      this.onStartPlaying();
+
+      if(currentVideo.src === undefined) {
+        this.setThumbFromFrame(currentVideo);
+        this.onStopPlaying();
+      } else {
+        switchVideo();
+        nextVideo.src = await liveStream.nextChunk;
+        currentVideo.addEventListener('ended', endedListener);
+        currentVideo.play();
+      }
+    }
+
+    currentVideo.src = await liveStream.currentChunk;
+    nextVideo.src = await liveStream.nextChunk;
+    currentVideo.addEventListener('ended', endedListener);
+    await currentVideo.play();
   }
 
   private onStartPlaying = () => {
@@ -55,7 +137,7 @@ export default class LiveStreamViewer {
 
   private updateView() {
     this.liveBadge.classList.toggle('playing', this.isPlaying);
-    this.thumbBlur.classList.toggle('hidden', this.isPlaying);
+    this.loadingContainer?.classList.toggle('hidden', this.isPlaying);
     if(this.isPlaying) {
       this.loadingAnimation.stop();
     } else {
@@ -68,11 +150,25 @@ export default class LiveStreamViewer {
     if(target.tagName === 'A') return;
 
     cancelEvent(e);
-    this.close();
+    // this.close();
   }
 
-  private async setThumb(fromId: PeerId | string) {
-    // let thumbPromise = Promise.resolve();
+  private setThumbFromUrl(url: string) {
+    this.thumb.style.setProperty('--thumb', `url(${url})`);
+  }
+
+  private setThumbFromFrame(video: HTMLVideoElement) {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.width
+    canvas.height = video.height
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const url = canvas.toDataURL();
+    this.thumb.style.setProperty('--thumb', `url(${url})`);
+    liveStreamController.liveStream?.saveLastFrame(url);
+  }
+
+  private async setThumbFromAvatar(fromId: PeerId | string) {
     const isPeerId = fromId.isPeerId();
 
     if(isPeerId) {
@@ -96,9 +192,15 @@ export default class LiveStreamViewer {
     }
   }
 
-  public async open({fromId, userCaption}: {fromId: PeerId | string, userCaption: string}) {
-    const setAuthorPromise = this.underlay.setAuthorInfo(fromId, userCaption);
-    this.setThumb(fromId);
+  public async open(fromId: PeerId | string) {
+    const setAuthorPromise = this.underlay.setAuthorInfo(fromId, 'streaming'/* i18n? */);
+
+    const lastFrame = liveStreamController.liveStream?.getLastFrame();
+    if(lastFrame) {
+      this.setThumbFromUrl(lastFrame);
+    } else {
+      this.setThumbFromAvatar(fromId);
+    }
 
     this.navigationItem = {
       type: 'media',
@@ -130,6 +232,7 @@ export default class LiveStreamViewer {
 
     this.underlay.destroyAvatarMiddleware();
 
+    this.streamPlayer.classList.toggle('hidden', true);
     this.underlay.toggleWholeActive(false);
 
     const promise = new Promise<void>((resolve) => {
@@ -145,6 +248,7 @@ export default class LiveStreamViewer {
       this.underlay.remove();
     });
 
+    liveStreamController.leaveLiveStream();
     return promise;
   }
 
@@ -152,8 +256,11 @@ export default class LiveStreamViewer {
     const player = document.createElement('div');
     player.classList.add('stream-player');
 
-    const video = document.createElement('video');
-    video.classList.add('stream-player-video');
+    this.video1 = document.createElement('video');
+    this.video1.classList.add('stream-player-video');
+
+    this.video2 = document.createElement('video');
+    this.video2.classList.add('stream-player-video');
 
     const controlsBar = document.createElement('div');
     controlsBar.classList.add('stream-player-controls');
@@ -183,23 +290,23 @@ export default class LiveStreamViewer {
 
     controlsBar.append(controlsLeft, controlsRight);
 
-    player.append(video, this.createLoading(), controlsBar);
+    player.append(this.video1, this.video2, this.createLoading(), controlsBar);
 
     return player;
   }
 
   private createLoading() {
-    const loading = document.createElement('div');
-    loading.classList.add('stream-player-loading');
+    this.loadingContainer = document.createElement('div');
+    this.loadingContainer.classList.add('stream-player-loading');
 
     this.thumb = document.createElement('div');
     this.thumb.classList.add('stream-player-loading-thumb');
 
-    this.thumbBlur = document.createElement('div');
-    this.thumbBlur.classList.add('stream-player-loading-thumb-blur');
+    const thumbBlur = document.createElement('div');
+    thumbBlur.classList.add('stream-player-loading-thumb-blur');
 
-    loading.append(this.thumb, this.thumbBlur, this.loadingAnimation.canvas);
+    this.loadingContainer.append(this.thumb, thumbBlur, this.loadingAnimation.canvas);
 
-    return loading;
+    return this.loadingContainer;
   }
 }

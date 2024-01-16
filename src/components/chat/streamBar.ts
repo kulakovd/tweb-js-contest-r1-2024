@@ -77,10 +77,7 @@ export default class ChatStreamBar {
     joinBtn.append(this.joinAnimation.canvas);
 
     attachClickEvent(joinBtn, () => {
-      new LiveStreamViewer().open({
-        fromId: this.chat.peerId,
-        userCaption: 'streaming' // i18n?
-      })
+      this.chat.appImManager.joinGroupCall(this.chat.peerId, this.callId);
     });
 
     plate.append(line, liveSteamText, joinBtn);
