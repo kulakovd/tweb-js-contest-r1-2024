@@ -1,6 +1,7 @@
 .stream-bar {
   z-index: 1;
   width: 100%;
+  max-width: 100%;
   border-top: 1px solid #E6EAED;
   position: relative;
 
@@ -9,6 +10,20 @@
     height: 42px;
     width: 100%;
     background: linear-gradient(90deg, #4588E3 0.79%, #976FFF 54.33%, #E46ACE 97.09%);
+
+    @include respond-to(medium-screens) {
+      body.is-right-column-shown & {
+        width: calc(100% - var(--right-column-width));
+      }
+    }
+
+    body.animation-level-2 & {
+      transition: all var(--transition-standard-out);
+    }
+
+    body.animation-level-2.is-right-column-shown & {
+      transition: all var(--transition-standard-in);
+    }
   }
 
   &-plate {

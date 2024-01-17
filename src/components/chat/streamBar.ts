@@ -8,7 +8,7 @@ import {attachClickEvent} from '../../helpers/dom/clickEvent';
 import LiveStreamViewer from '../liveStreamViewer';
 import {ShineAnimationCanvas} from '../shineAnimationCanvas';
 
-const JOIN_BTN_ANIMATION_DELAY = 1000;
+const JOIN_BTN_ANIMATION_DELAY = 200;
 
 export default class ChatStreamBar {
   public container: HTMLDivElement;
