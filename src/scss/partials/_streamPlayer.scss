@@ -1,7 +1,8 @@
 .stream-player {
   position: absolute;
-  width: 1080px;
-  height: 608px;
+  max-width: 1080px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   background: black;
   z-index: 4;
   left: 50%;
@@ -17,8 +18,10 @@
 
   &-video {
     position: absolute;
-    width: 1080px;
-    height: 608px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   &-loading {

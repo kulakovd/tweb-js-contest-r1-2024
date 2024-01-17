@@ -10,6 +10,7 @@ import {GroupCall, PhotoSize} from '../layer';
 import appDownloadManager from '../lib/appManagers/appDownloadManager';
 import ListenerSetter from '../helpers/listenerSetter';
 import liveStreamController from '../lib/calls/liveStreamController';
+import {attachClickEvent} from '../helpers/dom/clickEvent';
 
 export default class LiveStreamViewer {
   protected navigationItem: NavigationItem;
@@ -24,6 +25,8 @@ export default class LiveStreamViewer {
 
   private video1: HTMLVideoElement;
   private video2: HTMLVideoElement;
+
+  private fullScreenBtn: HTMLButtonElement;
 
   private isPlaying: boolean = false;
 
@@ -60,6 +63,14 @@ export default class LiveStreamViewer {
       this.updateCall(liveStreamController.groupCall);
       this.play();
     });
+  }
+
+  private toggleFullScreen() {
+    if(!document.fullscreenElement) {
+      this.streamPlayer.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
   }
 
   private updateCall(groupCall: GroupCall) {
@@ -284,9 +295,13 @@ export default class LiveStreamViewer {
     controlsLeft.append(this.liveBadge, soundBtn, this.watchingCounter);
 
     const pipBtn = ButtonIcon('pip', {noRipple: true});
-    const fullscreenBtn = ButtonIcon('fullscreen', {noRipple: true});
+    this.fullScreenBtn = ButtonIcon('fullscreen', {noRipple: true});
 
-    controlsRight.append(pipBtn, fullscreenBtn);
+    attachClickEvent(this.fullScreenBtn, () => {
+      this.toggleFullScreen();
+    });
+
+    controlsRight.append(pipBtn, this.fullScreenBtn);
 
     controlsBar.append(controlsLeft, controlsRight);
 
