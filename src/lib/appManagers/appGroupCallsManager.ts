@@ -414,4 +414,29 @@ export class AppGroupCallsManager extends AppManager {
       dcId
     })
   }
+
+  public getGroupCallStreamRtmpUrl(
+    peerId: PeerId,
+    revoke?: boolean
+  ) {
+    return this.apiManager.invokeApi('phone.getGroupCallStreamRtmpUrl', {
+      peer: this.appPeersManager.getInputPeerById(peerId),
+      revoke
+    });
+  }
+
+  public async startLiveStream(
+    peerId: PeerId
+  ) {
+    const updates = await this.apiManager.invokeApi('phone.createGroupCall', {
+      peer: this.appPeersManager.getInputPeerById(peerId),
+      random_id: nextRandomUint(32),
+      rtmp_stream: true
+    });
+
+    this.apiUpdatesManager.processUpdateMessage(updates);
+
+    const update = (updates as Updates.updates).updates.find((update) => update._ === 'updateGroupCall') as Update.updateGroupCall;
+    return update.call;
+  }
 }

@@ -7,7 +7,7 @@ import {nextRandomUint} from '../../helpers/random';
 
 export class LiveStreamController {
   private audioAsset: ReturnType<typeof getGroupCallAudioAsset>;
-  public groupCall: GroupCall;
+  public groupCall?: GroupCall;
   public liveStream?: LiveStreamInstance;
   private managers: AppManagers;
 
@@ -48,10 +48,11 @@ export class LiveStreamController {
     this.audioAsset.playSound('group_call_start.mp3');
   }
 
-  public async leaveLiveStream() {
+  public async leaveLiveStream(discard?: boolean) {
     if(!this.groupCall) return;
 
-    await this.managers.appGroupCallsManager.hangUp(this.groupCall.id, this.ssrc);
+    this.liveStream?.disconnect();
+    await this.managers.appGroupCallsManager.hangUp(this.groupCall.id, discard ? true : this.ssrc);
     this.audioAsset.playSound('group_call_end.mp3');
   }
 }

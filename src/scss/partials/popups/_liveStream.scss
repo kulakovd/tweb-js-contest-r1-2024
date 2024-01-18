@@ -1,0 +1,98 @@
+.popup-live-stream-settings {
+  & .popup-header {
+    margin-bottom: 8px;
+  }
+
+  & .popup-title {
+    text-transform: capitalize;
+  }
+
+  & .popup-body {
+    width: min-content;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  & .popup-footer {
+    margin-top: 16px;
+    padding: 0;
+  }
+
+  & .popup-container {
+    box-sizing: border-box;
+  }
+
+  &-button {
+    text-transform: uppercase;
+    height: 48px;
+  }
+
+  &-instructions {
+    padding: 12px 8px;
+    color: var(--secondary-text-color);
+  }
+
+  &-eye {
+    width: fit-content;
+    height: fit-content;
+    padding: 0;
+
+    &.btn-icon {
+      font-size: 20px;
+    }
+  }
+
+  &-revoke {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 0 8px;
+
+    &-icon {
+      padding: 8px;
+      font-size: 24px;
+    }
+  }
+
+  &-cred {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 7px 8px;
+    min-width: 470px;
+    border-radius: 10px;
+    cursor: pointer;
+
+    @include hover-background-effect();
+
+    .night &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    &-icon {
+      padding: 8px;
+      font-size: 24px;
+      color: var(--secondary-text-color);
+    }
+
+    &-value {
+      line-height: 22px;
+    }
+
+    &-label {
+      font-size: 14px;
+      line-height: 20px;
+      display: flex;
+      align-items: center;
+      color: var(--secondary-text-color);
+      gap: 4px;
+    }
+  }
+}

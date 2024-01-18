@@ -11,6 +11,14 @@ import appDownloadManager from '../lib/appManagers/appDownloadManager';
 import ListenerSetter from '../helpers/listenerSetter';
 import liveStreamController from '../lib/calls/liveStreamController';
 import {attachClickEvent} from '../helpers/dom/clickEvent';
+import ButtonMenuToggle from './buttonMenuToggle';
+import PopupElement from './popups';
+import PopupLiveStreamSettings from './popups/liveStreamSettings';
+import {AppImManager} from '../lib/appManagers/appImManager';
+import {AppManagers} from '../lib/appManagers/managers';
+import LiveStreamCreds from './groupCall/liveStreamCreds';
+
+const VIDEO_RATIO = 16 / 9; // CSS is not reliable
 
 export default class LiveStreamViewer {
   protected navigationItem: NavigationItem;
@@ -19,6 +27,7 @@ export default class LiveStreamViewer {
   private streamPlayer: HTMLDivElement;
   private loadingContainer: HTMLDivElement;
   private thumb: HTMLDivElement;
+  private oopsContainer?: HTMLDivElement;
 
   private liveBadge: HTMLDivElement;
   private watchingCounter: HTMLDivElement;
@@ -26,9 +35,10 @@ export default class LiveStreamViewer {
   private video1: HTMLVideoElement;
   private video2: HTMLVideoElement;
 
-  private fullScreenBtn: HTMLButtonElement;
-
   private isPlaying: boolean = false;
+
+  private resizeObserver: ResizeObserver;
+  private readonly listenerSetter: ListenerSetter;
 
   private loadingAnimation?: ShineAnimationCanvas = new ShineAnimationCanvas(
     'stream-player-loading-canvas',
@@ -41,10 +51,15 @@ export default class LiveStreamViewer {
     }
   );
 
-  constructor(connectionPromise: Promise<void>) {
-    const listenerSetter = new ListenerSetter();
+  constructor(
+    private peerId: PeerId,
+    connectionPromise: Promise<void>,
+    private managers: AppManagers,
+    private appImManager: AppImManager
+  ) {
+    this.listenerSetter = new ListenerSetter();
 
-    listenerSetter.add(rootScope)('group_call_update', this.updateCall.bind(this));
+    this.listenerSetter.add(rootScope)('group_call_update', this.updateCall.bind(this));
 
     this.underlay = new AppMediaViewerUnderlay(['forward']);
     this.underlay.onClick = this.onClick;
@@ -54,15 +69,54 @@ export default class LiveStreamViewer {
     this.streamPlayer = this.createStreamPlayer();
     this.underlay.append(this.streamPlayer);
 
+    this.resize();
+    this.resizeObserver = new ResizeObserver(this.resize.bind(this));
+    this.resizeObserver.observe(this.streamPlayer);
+
     this.video1.preload = 'auto';
     this.video2.preload = 'auto';
 
     this.loadingAnimation.runInfinite();
 
     connectionPromise.then(() => {
+      liveStreamController.liveStream.addEventListener('oops', this.showOops.bind(this));
+
       this.updateCall(liveStreamController.groupCall);
       this.play();
     });
+  }
+
+  private async showOops() {
+    this.oopsContainer = document.createElement('div');
+    this.oopsContainer.classList.add('stream-player-oops-container', 'night');
+
+    const title = document.createElement('div');
+    title.classList.add('stream-player-oops-title');
+    title.append('Oops!');
+
+    const explanation = document.createElement('div');
+    explanation.classList.add('stream-player-oops-explanation');
+    explanation.innerText = 'Telegram doesn\'t see any stream coming from your streaming app. Please make sure you entered the right Server URL and Stream Key in your app.'
+
+    const textWrapper = document.createElement('div');
+    textWrapper.classList.add('stream-player-oops-text-wrapper');
+    textWrapper.append(title, explanation);
+
+    const creds = new LiveStreamCreds(this.peerId, this.managers);
+    await creds.promise;
+
+    this.oopsContainer.append(textWrapper, creds.container);
+    this.streamPlayer.append(this.oopsContainer);
+  }
+
+  private hideOops() {
+    this.oopsContainer?.remove();
+  }
+
+  private resize() {
+    const width = this.streamPlayer.clientWidth;
+    const height = Math.round(width / VIDEO_RATIO);
+    this.streamPlayer.style.height = `${height}px`;
   }
 
   private toggleFullScreen() {
@@ -73,13 +127,15 @@ export default class LiveStreamViewer {
     }
   }
 
-  private updateCall(groupCall: GroupCall) {
-    if(liveStreamController.groupCall.id !== groupCall.id) return;
+  private updateCall(groupCall?: GroupCall) {
+    if(liveStreamController?.groupCall.id !== groupCall.id) return;
 
     if(groupCall?._ === 'groupCall') {
       const participantsCount = Math.max(0, groupCall.participants_count);
 
       this.watchingCounter.innerText = `${participantsCount} watching`;
+    } else {
+      this.close();
     }
   }
 
@@ -139,6 +195,7 @@ export default class LiveStreamViewer {
   private onStartPlaying = () => {
     this.isPlaying = true;
     this.updateView();
+    this.hideOops();
   }
 
   private onStopPlaying = () => {
@@ -203,14 +260,14 @@ export default class LiveStreamViewer {
     }
   }
 
-  public async open(fromId: PeerId | string) {
-    const setAuthorPromise = this.underlay.setAuthorInfo(fromId, 'streaming'/* i18n? */);
+  public async open() {
+    const setAuthorPromise = this.underlay.setAuthorInfo(this.peerId, 'streaming'/* i18n? */);
 
     const lastFrame = liveStreamController.liveStream?.getLastFrame();
     if(lastFrame) {
       this.setThumbFromUrl(lastFrame);
     } else {
-      this.setThumbFromAvatar(fromId);
+      this.setThumbFromAvatar(this.peerId);
     }
 
     this.navigationItem = {
@@ -232,11 +289,7 @@ export default class LiveStreamViewer {
     this.underlay.insert();
   }
 
-  public close(e?: MouseEvent) {
-    if(e) {
-      cancelEvent(e);
-    }
-
+  public close(discard?: boolean) {
     if(this.navigationItem) {
       appNavigationController.removeItem(this.navigationItem);
     }
@@ -259,9 +312,39 @@ export default class LiveStreamViewer {
       this.underlay.remove();
     });
 
-    liveStreamController.leaveLiveStream();
+    this.resizeObserver.disconnect();
+
+    liveStreamController.leaveLiveStream(discard);
     return promise;
   }
+
+  private menuButtons = [
+    {
+      icon: 'volume_up',
+      text: 'Output Device',
+      onClick: () => {}
+    },
+    {
+      icon: 'gc_microphone', // TODO change icon
+      text: 'Record',
+      onClick: () => {}
+    },
+    {
+      icon: 'settings',
+      text: 'Stream Settings',
+      onClick: () => {
+        PopupElement.createPopup(PopupLiveStreamSettings, true, this.peerId, this.appImManager)
+      }
+    },
+    {
+      icon: 'crossround',
+      danger: true,
+      text: 'End Live Stream',
+      onClick: () => {
+        this.close(true);
+      }
+    }
+  ] as const;
 
   private createStreamPlayer() {
     const player = document.createElement('div');
@@ -295,17 +378,30 @@ export default class LiveStreamViewer {
     controlsLeft.append(this.liveBadge, soundBtn, this.watchingCounter);
 
     const pipBtn = ButtonIcon('pip', {noRipple: true});
-    this.fullScreenBtn = ButtonIcon('fullscreen', {noRipple: true});
+    const fullScreenBtn = ButtonIcon('fullscreen', {noRipple: true});
 
-    attachClickEvent(this.fullScreenBtn, () => {
+    attachClickEvent(fullScreenBtn, () => {
       this.toggleFullScreen();
     });
 
-    controlsRight.append(pipBtn, this.fullScreenBtn);
+    controlsRight.append(pipBtn, fullScreenBtn);
 
     controlsBar.append(controlsLeft, controlsRight);
 
     player.append(this.video1, this.video2, this.createLoading(), controlsBar);
+
+    const chatId = this.peerId.toChatId();
+    this.managers.appChatsManager.hasRights(chatId, 'manage_call').then((hasRights) => {
+      if(hasRights) {
+        const btnMore = ButtonMenuToggle({
+          listenerSetter: this.listenerSetter,
+          direction: 'top-left',
+          buttons: this.menuButtons as any
+        });
+
+        controlsRight.prepend(btnMore);
+      }
+    });
 
     return player;
   }

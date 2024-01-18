@@ -1437,7 +1437,7 @@ export class AppImManager extends EventListenerBase<{
       const isLiveStream = fullCall?._ === 'groupCall' && fullCall.pFlags.rtmp_stream
       if(isLiveStream) {
         const connectionPromise = liveStreamController.joinLiveStream(call.id);
-        new LiveStreamViewer(connectionPromise).open(peerId)
+        new LiveStreamViewer(peerId, connectionPromise, this.managers, this).open();
       } else {
         groupCallsController.joinGroupCall(chatId, call.id, true, false);
       }

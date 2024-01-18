@@ -110,7 +110,7 @@ export class AppMediaViewerUnderlay<
 
   public setListeners() {
     [this.buttons.close, this.buttons['mobile-close']].forEach((el) => {
-      attachClickEvent(el, this.onClose);
+      attachClickEvent(el, () => this.onClose());
     });
 
     this.wholeDiv.addEventListener('click', this.onClick);

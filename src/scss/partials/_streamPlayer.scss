@@ -104,4 +104,31 @@
       margin: 8px 16px;
     }
   }
+
+  &-oops {
+    &-container.night {
+      width: min-content;
+      position: absolute;
+      z-index: 4;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+
+      --secondary-text-color: white;
+    }
+
+    &-text-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 16px;
+      color: white;
+    }
+
+    &-title {
+      font-size: 20px;
+      font-weight: 500;
+    }
+  }
 }

@@ -1,11 +1,18 @@
 import {AppManagers} from '../appManagers/managers';
 import {GroupCall, GroupCallStreamChannel} from '../../layer';
+import EventListenerBase from '../../helpers/eventListenerBase';
 
 type VideoStreamPartPromise = Promise<VideoStreamPart> & {
   timestamp: bigint;
 }
 
-export default class LiveStreamInstance {
+const OOPS_TIMEOUT = 3000;
+const WAIT_FOR_CHANNELS_INTERVAL = 1000;
+
+export default class LiveStreamInstance extends EventListenerBase<{
+  oops: () => void;
+}> {
+  private streamEnded: boolean = false;
   private chunks: Array<VideoStreamPartPromise> = [];
 
   public get currentChunk(): Promise<string> {
@@ -28,14 +35,14 @@ export default class LiveStreamInstance {
 
   private lastFrameUrl: string | null = null;
 
-  private streamChannelsTimeout: ReturnType<typeof setTimeout> | null = null;
+  private spentWaitingForChannels: number = 0;
+  private oops: boolean = false;
 
   constructor(
     private managers: AppManagers,
     private call: GroupCall.groupCall
   ) {
-    (window as any).liveStreamInstance = this;
-
+    super();
     this.streamDcId = call.stream_dc_id;
   }
 
@@ -74,22 +81,34 @@ export default class LiveStreamInstance {
 
     this.lastChunkTimestamp = startTimestamp - BigInt(this.bufferChunks + 1) * BigInt(this.chunkDuration);
     this.enqueueLoadingChunks(this.bufferChunks + 1);
+    await Promise.all(this.chunks);
   }
 
   public async disconnect() {
-    if(this.streamChannelsTimeout !== null) {
-      clearTimeout(this.streamChannelsTimeout);
-    }
+    this.streamEnded = true;
   }
 
   private async getVideoChannel(): Promise<GroupCallStreamChannel> {
-    this.streamChannelsTimeout = null;
+    if(this.streamEnded) {
+      return;
+    }
+
+    if(this.spentWaitingForChannels > OOPS_TIMEOUT && !this.oops) {
+      this.dispatchEvent('oops');
+      this.oops = true;
+    }
+
     const streamChannels = await this.managers.appGroupCallsManager.getGroupCallStreamChannels(this.call.id, this.streamDcId);
     const channel = streamChannels.channels.find(channel => channel.channel === this.channel);
-    if(channel !== undefined) {
+    const appropiateTimestamp = channel && (BigInt(channel.last_timestamp_ms) >= BigInt(this.bufferChunks + 1) * BigInt(this.chunkDuration));
+    if(appropiateTimestamp) {
+      this.oops = false;
       return channel;
     }
-    this.streamChannelsTimeout = setTimeout(() => this.getVideoChannel(), 1000);
+    return new Promise(resolve => setTimeout(() => {
+      resolve(this.getVideoChannel())
+      this.spentWaitingForChannels += WAIT_FOR_CHANNELS_INTERVAL;
+    }, WAIT_FOR_CHANNELS_INTERVAL));
   }
 
   private enqueueLoadingChunks(n: number) {
@@ -107,7 +126,10 @@ export default class LiveStreamInstance {
   }
 
   private async loadChunk(time: bigint): Promise<VideoStreamPart> {
-    const load = async() => {
+    if(this.streamEnded) {
+      throw new Error('Stream ended');
+    }
+    try {
       const chunk = await this.managers.appGroupCallsManager.getGroupCallStreamChunk(
         this.streamDcId,
         this.call,
@@ -123,13 +145,8 @@ export default class LiveStreamInstance {
 
       const {bytes} = chunk;
       return new VideoStreamPart(bytes, time);
-    }
-
-    try {
-      return load();
     } catch(e) {
-      console.error(e);
-      setTimeout(load, this.chunkDuration / 10);
+      return new Promise(resolve => setTimeout(() => resolve(this.loadChunk(time)), this.chunkDuration / 10));
     }
   }
 }
