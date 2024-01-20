@@ -305,7 +305,7 @@ export default class LiveStreamViewer {
       onClick: () => {}
     },
     {
-      icon: 'gc_microphone', // TODO change icon
+      icon: 'radioon',
       text: 'Record',
       onClick: () => {}
     },
