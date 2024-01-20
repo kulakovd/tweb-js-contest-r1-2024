@@ -5,7 +5,6 @@ import ListenerSetter from '../../helpers/listenerSetter';
 import rootScope from '../../lib/rootScope';
 import Chat from './chat';
 import {attachClickEvent} from '../../helpers/dom/clickEvent';
-import LiveStreamViewer from '../liveStreamViewer';
 import {ShineAnimationCanvas} from '../shineAnimationCanvas';
 
 const JOIN_BTN_ANIMATION_DELAY = 200;

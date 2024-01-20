@@ -83,6 +83,11 @@ export default class LiveStreamViewer {
   }
 
   private async showOops() {
+    const chatId = this.peerId.toChatId();
+    const hasRight = await this.managers.appChatsManager.hasRights(chatId, 'manage_call');
+
+    if(!hasRight) return;
+
     this.oopsContainer = document.createElement('div');
     this.oopsContainer.classList.add('stream-player-oops-container', 'night');
 

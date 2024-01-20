@@ -401,7 +401,9 @@ export default class ChatTopbar {
       onClick: () => {
         PopupElement.createPopup(PopupLiveStreamSettings, false, this.peerId, this.chat.appImManager);
       },
-      verify: this.verifyVideoChatButton.bind(this, 'broadcast')
+      verify: async() => {
+        return this.managers.appChatsManager.hasRights(this.peerId.toChatId(), 'manage_call');
+      }
     }, {
       icon: 'videochat',
       text: 'PeerInfo.Action.VoiceChat',
