@@ -1992,7 +1992,6 @@ export default class AppMediaViewerBase<
                 }, false);
 
                 cancellableFullPromise && cancellableFullPromise.then((url) => {
-                  console.log('AppMedia full url:', url)
                   const fullImage = new Image();
                   fullImage.classList.add('thumbnail');
                   renderImageFromUrl(fullImage, url, () => {

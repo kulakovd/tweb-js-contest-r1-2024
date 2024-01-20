@@ -59,8 +59,7 @@ export default class ChatStreamBar {
 
     const liveStreamTitle = document.createElement('div');
     liveStreamTitle.classList.add('stream-bar-title');
-    // _i18n(liveStreamTitle, 'LiveStream.Status.Title');
-    _i18n(liveStreamTitle, 'PeerInfo.Action.LiveStream');
+    _i18n(liveStreamTitle, 'LiveStream.Bar.Title');
 
     this.watchingCounter = document.createElement('div');
     this.watchingCounter.classList.add('stream-bar-viewers');
@@ -71,8 +70,7 @@ export default class ChatStreamBar {
 
     const joinBtn = document.createElement('button');
     joinBtn.classList.add('stream-bar-button');
-    // _i18n(joinBtn, 'LiveStream.Action.Join');
-    joinBtn.innerText = 'Join';
+    _i18n(joinBtn, 'LiveStream.Bar.Join');
     joinBtn.append(this.joinAnimation.canvas);
 
     attachClickEvent(joinBtn, () => {
@@ -116,8 +114,7 @@ export default class ChatStreamBar {
       const participantsCount = Math.max(0, groupCall.participants_count);
 
       this.container.classList.remove('hide');
-      // _i18n(this.watchingCounter, 'LiveStream.Status.Participants', [groupCall.participants_count]);
-      this.watchingCounter.innerText = `${participantsCount} watching`;
+      _i18n(this.watchingCounter, 'LiveStream.Bar.Watching', [groupCall.participants_count]);
 
       if(animateBtn) {
         await this.joinAnimation.runOnce(JOIN_BTN_ANIMATION_DELAY);

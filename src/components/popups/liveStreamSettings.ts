@@ -6,6 +6,7 @@ import ListenerSetter from '../../helpers/listenerSetter';
 import rootScope from '../../lib/rootScope';
 import liveStreamController from '../../lib/calls/liveStreamController';
 import LiveStreamCreds from '../groupCall/liveStreamCreds';
+import {_i18n} from '../../lib/langPack';
 
 export default class PopupLiveStreamSettings extends PopupElement {
   private streamCreds: LiveStreamCreds;
@@ -39,16 +40,16 @@ export default class PopupLiveStreamSettings extends PopupElement {
     this.footer.append(this.btnConfirm);
 
     if(this.streamStarted) {
-      this.title.innerText = 'Stream settings';
-      this.btnConfirm.innerText = 'End live stream';
+      _i18n(this.title, 'LiveStream.PopUp.Stream.TitleSettings');
+      _i18n(this.btnConfirm, 'LiveStream.PopUp.Stream.EndLiveStream');
       this.btnConfirm.classList.add('btn-color-danger');
       attachClickEvent(this.btnConfirm, async() => {
         this.hide();
         await liveStreamController.leaveLiveStream(true);
       });
     } else {
-      this.title.innerText = 'Stream with...';
-      this.btnConfirm.innerText = 'Start streaming';
+      _i18n(this.title, 'LiveStream.PopUp.Stream.Title');
+      _i18n(this.btnConfirm, 'LiveStream.PopUp.Stream.StartStreaming');
       attachClickEvent(this.btnConfirm, async() => {
         this.hide();
         const call = await this.managers.appGroupCallsManager.startLiveStream(this.peerId);
@@ -58,7 +59,7 @@ export default class PopupLiveStreamSettings extends PopupElement {
 
     const instructions = document.createElement('div');
     instructions.classList.add('popup-live-stream-settings-instructions');
-    instructions.innerText = 'To stream video with another app, enter these Server URL and Stream Key in your streaming app. Software encoding recommended (×264 in OBS).';
+    _i18n(instructions, 'LiveStream.PopUp.Stream.Description');
 
     this.streamCreds = new LiveStreamCreds(this.peerId, this.managers);
 
@@ -71,7 +72,7 @@ export default class PopupLiveStreamSettings extends PopupElement {
     } else {
       const yetAnotherInstructions = document.createElement('div');
       yetAnotherInstructions.classList.add('popup-live-stream-settings-instructions');
-      yetAnotherInstructions.innerText = 'Once you start broadcasting in your streaming app, click Start Streaming below.';
+      _i18n(yetAnotherInstructions, 'LiveStream.PopUp.Stream.Hint');
       this.body.prepend(yetAnotherInstructions);
     }
 

@@ -17,6 +17,8 @@ import PopupLiveStreamSettings from './popups/liveStreamSettings';
 import {AppImManager} from '../lib/appManagers/appImManager';
 import {AppManagers} from '../lib/appManagers/managers';
 import LiveStreamCreds from './groupCall/liveStreamCreds';
+import {_i18n, I18n} from '../lib/langPack';
+import {ButtonMenuItemOptionsVerifiable} from './buttonMenu';
 
 const VIDEO_RATIO = 16 / 9; // CSS is not reliable
 
@@ -93,11 +95,11 @@ export default class LiveStreamViewer {
 
     const title = document.createElement('div');
     title.classList.add('stream-player-oops-title');
-    title.append('Oops!');
+    _i18n(title, 'LiveStream.MediaViewer.Failed.Title');
 
     const explanation = document.createElement('div');
     explanation.classList.add('stream-player-oops-explanation');
-    explanation.innerText = 'Telegram doesn\'t see any stream coming from your streaming app. Please make sure you entered the right Server URL and Stream Key in your app.'
+    _i18n(title, 'LiveStream.MediaViewer.Failed.Description');
 
     const textWrapper = document.createElement('div');
     textWrapper.classList.add('stream-player-oops-text-wrapper');
@@ -134,7 +136,7 @@ export default class LiveStreamViewer {
     if(groupCall?._ === 'groupCall') {
       const participantsCount = Math.max(0, groupCall.participants_count);
 
-      this.watchingCounter.innerText = `${participantsCount} watching`;
+      _i18n(this.watchingCounter, 'LiveStream.Bar.Watching', [participantsCount]);
     } else {
       this.close();
     }
@@ -241,7 +243,7 @@ export default class LiveStreamViewer {
   }
 
   public async open() {
-    const setAuthorPromise = this.underlay.setAuthorInfo(this.peerId, 'streaming'/* i18n? */);
+    const setAuthorPromise = this.underlay.setAuthorInfo(this.peerId, I18n.format('LiveStream.MediaViewer.Streaming', true));
 
     const lastFrame = liveStreamController.liveStream?.getLastFrame();
     if(lastFrame) {
@@ -298,20 +300,20 @@ export default class LiveStreamViewer {
     return promise;
   }
 
-  private menuButtons = [
+  private menuButtons: ButtonMenuItemOptionsVerifiable[] = [
     {
       icon: 'volume_up',
-      text: 'Output Device',
+      text: 'LiveStream.MediaViewer.Menu.Option.OutputDevice',
       onClick: () => {}
     },
     {
       icon: 'radioon',
-      text: 'Record',
+      text: 'LiveStream.MediaViewer.Menu.Option.StartRecording',
       onClick: () => {}
     },
     {
       icon: 'settings',
-      text: 'Stream Settings',
+      text: 'LiveStream.MediaViewer.Menu.Option.StreamSettings',
       onClick: () => {
         PopupElement.createPopup(PopupLiveStreamSettings, true, this.peerId, this.appImManager)
       }
@@ -319,12 +321,12 @@ export default class LiveStreamViewer {
     {
       icon: 'crossround',
       danger: true,
-      text: 'End Live Stream',
+      text: 'LiveStream.MediaViewer.Menu.Option.EndLiveStream',
       onClick: () => {
         this.close(true);
       }
     }
-  ] as const;
+  ];
 
   private createStreamPlayer() {
     const player = document.createElement('div');
@@ -344,13 +346,12 @@ export default class LiveStreamViewer {
 
     this.liveBadge = document.createElement('div');
     this.liveBadge.classList.add('stream-player-live-badge');
-    this.liveBadge.innerText = 'Live'; // _i18n(liveBadge, 'LiveStream.Status.Live');
+    _i18n(this.liveBadge, 'LiveStream.MediaViewer.Live');
 
     const soundBtn = ButtonIcon('volume_up', {noRipple: true});
 
     this.watchingCounter = document.createElement('div');
     this.watchingCounter.classList.add('stream-player-watching-counter');
-    this.watchingCounter.innerText = '28,395 watching';
 
     controlsLeft.append(this.liveBadge, soundBtn, this.watchingCounter);
 
@@ -373,7 +374,7 @@ export default class LiveStreamViewer {
         const btnMore = ButtonMenuToggle({
           listenerSetter: this.listenerSetter,
           direction: 'top-left',
-          buttons: this.menuButtons as any
+          buttons: this.menuButtons
         });
 
         controlsRight.prepend(btnMore);

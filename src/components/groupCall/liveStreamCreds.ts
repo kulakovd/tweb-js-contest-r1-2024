@@ -5,6 +5,7 @@ import Icon from '../icon';
 import {AppManagers} from '../../lib/appManagers/managers';
 import {copyTextToClipboard} from '../../helpers/clipboard';
 import {toast} from '../toast';
+import {_i18n, I18n} from '../../lib/langPack';
 
 export default class LiveStreamCreds {
   public container: HTMLDivElement;
@@ -59,8 +60,10 @@ export default class LiveStreamCreds {
 
     const label = document.createElement('div');
     label.classList.add('popup-live-stream-settings-cred-label');
-    label.innerText = t === 'url' ? 'Server URL' : 'Stream Key';
-    if(t === 'key') {
+    if(t === 'url') {
+      _i18n(label, 'LiveStream.PopUp.Stream.ServerURL');
+    } else {
+      _i18n(label, 'LiveStream.PopUp.Stream.StreamKey');
       label.append(this.constructEyeBtn());
     }
 
@@ -74,9 +77,9 @@ export default class LiveStreamCreds {
       const text = t === 'url' ? this.streamUrl : this.streamKey;
       copyTextToClipboard(text);
       if(t === 'url') {
-        toast('Copied server URL to clipboard');
+        toast(I18n.format('LiveStream.PopUp.Stream.URLCopied', true));
       } else {
-        toast('Copied stream key to clipboard');
+        toast(I18n.format('LiveStream.PopUp.Stream.KeyCopied', true));
       }
     });
 
