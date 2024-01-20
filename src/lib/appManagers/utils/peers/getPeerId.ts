@@ -21,8 +21,8 @@ export default function getPeerId(peerId: {user_id: UserId} | {channel_id: ChatI
   // } else if(!peerId) return 'u0';
   } else if(!peerId) return NULL_PEER_ID;
 
-  const isUser = (peerId as string).charAt(0) === 'u';
-  const peerParams = (peerId as string).substr(1).split('_');
+  const isUser = (peerId as unknown as string).charAt(0) === 'u';
+  const peerParams = (peerId as unknown as string).substr(1).split('_');
 
   return isUser ? peerParams[0].toPeerId() : (peerParams[0] || '').toPeerId(true);
 }

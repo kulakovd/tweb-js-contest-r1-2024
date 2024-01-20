@@ -19,6 +19,10 @@ export class ShineAnimationCanvas {
 
   private animationFrameId: number | undefined;
 
+  public get isRunning() {
+    return this.animationFrameId !== undefined;
+  }
+
   constructor(
     className: string,
     props : {
@@ -82,6 +86,9 @@ export class ShineAnimationCanvas {
   }
 
   public async runInfinite() {
+    if(this.isRunning && !this.once) {
+      return;
+    }
     this.cancel();
     this.once = false;
     this.run();

@@ -32,8 +32,7 @@ export default class LiveStreamViewer {
   private liveBadge: HTMLDivElement;
   private watchingCounter: HTMLDivElement;
 
-  private video1: HTMLVideoElement;
-  private video2: HTMLVideoElement;
+  private video: HTMLVideoElement;
 
   private isPlaying: boolean = false;
 
@@ -72,9 +71,6 @@ export default class LiveStreamViewer {
     this.resize();
     this.resizeObserver = new ResizeObserver(this.resize.bind(this));
     this.resizeObserver.observe(this.streamPlayer);
-
-    this.video1.preload = 'auto';
-    this.video2.preload = 'auto';
 
     this.loadingAnimation.runInfinite();
 
@@ -140,56 +136,36 @@ export default class LiveStreamViewer {
   }
 
   private async play() {
-    let currentVideo = this.video1;
-    let nextVideo = this.video2;
-
-    currentVideo.style.zIndex = '2';
-    nextVideo.style.zIndex = '1';
-
-    function switchVideo() {
-      [currentVideo, nextVideo] = [nextVideo, currentVideo];
-
-      currentVideo.style.zIndex = '2';
-      nextVideo.style.zIndex = '1';
-    }
-
     const liveStream = liveStreamController.liveStream;
 
     if(!liveStream) {
       return;
     }
 
-    await liveStream.initStream()
-    await liveStream.waitForBuffer();
-    this.onStartPlaying();
+    this.video.src = liveStream.mediaSrc;
 
-    const endedListener = segmentEnded.bind(this);
-    async function segmentEnded(this: LiveStreamViewer) {
-      currentVideo.removeEventListener('ended', endedListener);
+    this.video.addEventListener('timeupdate', () => {
+      this.setThumbFromFrame(this.video);
+    });
 
-      this.setThumbFromFrame(currentVideo);
+    this.video.addEventListener('waiting', () => {
       this.onStopPlaying();
+    });
 
-      await liveStream.onChunkPlayed();
-      await liveStream.waitForBuffer();
+    this.video.addEventListener('pause', () => {
+      this.onStopPlaying();
+    });
 
+    this.video.addEventListener('playing', () => {
       this.onStartPlaying();
+    });
 
-      if(currentVideo.src === undefined) {
-        this.setThumbFromFrame(currentVideo);
-        this.onStopPlaying();
-      } else {
-        switchVideo();
-        nextVideo.src = await liveStream.nextChunk;
-        currentVideo.addEventListener('ended', endedListener);
-        currentVideo.play();
-      }
-    }
+    await liveStream.initStream();
 
-    currentVideo.src = await liveStream.currentChunk;
-    nextVideo.src = await liveStream.nextChunk;
-    currentVideo.addEventListener('ended', endedListener);
-    await currentVideo.play();
+    liveStream.addEventListener('timeupdate', (t) => {
+      this.video.currentTime = t;
+      this.video.play();
+    });
   }
 
   private onStartPlaying = () => {
@@ -218,7 +194,6 @@ export default class LiveStreamViewer {
     if(target.tagName === 'A') return;
 
     cancelEvent(e);
-    // this.close();
   }
 
   private setThumbFromUrl(url: string) {
@@ -350,11 +325,8 @@ export default class LiveStreamViewer {
     const player = document.createElement('div');
     player.classList.add('stream-player');
 
-    this.video1 = document.createElement('video');
-    this.video1.classList.add('stream-player-video');
-
-    this.video2 = document.createElement('video');
-    this.video2.classList.add('stream-player-video');
+    this.video = document.createElement('video');
+    this.video.classList.add('stream-player-video');
 
     const controlsBar = document.createElement('div');
     controlsBar.classList.add('stream-player-controls');
@@ -388,7 +360,7 @@ export default class LiveStreamViewer {
 
     controlsBar.append(controlsLeft, controlsRight);
 
-    player.append(this.video1, this.video2, this.createLoading(), controlsBar);
+    player.append(this.video, this.createLoading(), controlsBar);
 
     const chatId = this.peerId.toChatId();
     this.managers.appChatsManager.hasRights(chatId, 'manage_call').then((hasRights) => {
