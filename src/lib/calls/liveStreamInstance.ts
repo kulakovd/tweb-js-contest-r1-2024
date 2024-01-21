@@ -274,7 +274,8 @@ class ChunkBuffer extends EventListenerBase<{
 
 class VideoStreamDecoder {
   private opusDecoder = new OpusDecoder({ // TODO use web worker
-    streamCount: 2
+    streamCount: 2,
+    coupledStreamCount: 0
   });
 
   constructor(private audioContext: AudioContext) {}
