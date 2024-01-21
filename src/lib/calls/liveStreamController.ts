@@ -4,21 +4,29 @@ import {GroupCall} from '../../layer';
 import LiveStreamInstance from './liveStreamInstance';
 import {AppManagers} from '../appManagers/managers';
 import {nextRandomUint} from '../../helpers/random';
+import EventListenerBase from '../../helpers/eventListenerBase';
 
-export class LiveStreamController {
+export class LiveStreamController extends EventListenerBase<{
+  connect: (groupCall: GroupCall) => void
+  disconnect: () => void
+}> {
   private audioAsset: ReturnType<typeof getGroupCallAudioAsset>;
   public groupCall?: GroupCall;
   public liveStream?: LiveStreamInstance;
   private managers: AppManagers;
 
   private ssrc: number | undefined;
+  public chatId: ChatId | undefined;
+
+  public connected = false;
 
   public construct(managers: AppManagers) {
     this.managers = managers;
     this.audioAsset = getGroupCallAudioAsset();
   }
 
-  public async joinLiveStream(groupCallId: GroupCall['id']) {
+  public async joinLiveStream(chatId: ChatId, groupCallId: GroupCall['id']) {
+    this.chatId = chatId;
     this.groupCall = await this.managers.appGroupCallsManager.getGroupCallFull(groupCallId);
 
     if(this.groupCall._ !== 'groupCall') return;
@@ -45,16 +53,22 @@ export class LiveStreamController {
       }
     );
 
+    this.connected = true;
+    this.dispatchEvent('connect', this.groupCall);
     this.audioAsset.playSound('group_call_start.mp3');
   }
 
   public async leaveLiveStream(discard?: boolean) {
     if(!this.groupCall) return;
-
+    this.connected = false;
+    this.dispatchEvent('disconnect');
     this.liveStream?.disconnect();
-    this.liveStream = undefined;
     await this.managers.appGroupCallsManager.hangUp(this.groupCall.id, discard ? true : this.ssrc);
     this.audioAsset.playSound('group_call_end.mp3');
+
+    this.chatId = undefined;
+    this.groupCall = undefined;
+    this.liveStream = undefined;
   }
 }
 

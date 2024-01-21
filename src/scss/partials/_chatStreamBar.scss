@@ -4,6 +4,13 @@
   max-width: 100%;
   border-top: 1px solid #E6EAED;
   position: relative;
+  transform: translateY(0);
+  transition: transform var(--transition-standard-out);
+
+  &-hide {
+    display: block;
+    transform: translateY(-100%);
+  }
 
   &-gradient {
     border-radius: 4px;

@@ -4,6 +4,8 @@ import EventListenerBase from '../../helpers/eventListenerBase';
 import * as MP4Box from '../../vendor/mp4box.all';
 import {MP4ArrayBuffer, MP4Info} from '../../vendor/mp4box.all';
 import {OpusDecoder} from 'opus-decoder';
+import ListenerSetter from '../../helpers/listenerSetter';
+import appMediaPlaybackController from '../../components/appMediaPlaybackController';
 
 type VideoStreamPartPromise = Promise<VideoStreamPart> & {
   timestamp: bigint;
@@ -23,6 +25,8 @@ export default class LiveStreamInstance extends EventListenerBase<{
   timeupdate: (time: number) => void;
 }> {
   private audioContext = new AudioContext();
+  private volumeGain = this.audioContext.createGain();
+
   private mediaSource = new MediaSource();
   public mediaSrc: string = URL.createObjectURL(this.mediaSource);
   private streamEnded: boolean = false;
@@ -45,11 +49,22 @@ export default class LiveStreamInstance extends EventListenerBase<{
     private call: GroupCall.groupCall
   ) {
     super();
+    const listenerSetter = new ListenerSetter();
+
     this.streamDcId = call.stream_dc_id;
+
+    this.volumeGain.connect(this.audioContext.destination);
+    listenerSetter.add(appMediaPlaybackController)('playbackParams', () => this.setVolume());
+    this.setVolume();
 
     this.buffer = new ChunkBuffer(managers, this.audioContext, this.streamDcId, call);
     this.buffer.addEventListener('chunk', (chunk) => this.appendAudio(chunk));
     this.mediaSource.addEventListener('sourceopen', () => this.initMediaSource());
+  }
+
+  private setVolume = () => {
+    const volume = appMediaPlaybackController.muted ? 0 : appMediaPlaybackController.volume;
+    this.volumeGain.gain.setValueAtTime(volume, this.audioContext.currentTime);
   }
 
   public saveLastFrame(url: string) {
@@ -80,7 +95,6 @@ export default class LiveStreamInstance extends EventListenerBase<{
     this.startTimestamp = startTimestamp;
     this.buffer.setLastChunkTimestamp(startTimestamp);
 
-    this.buffer.enqueueLoadingChunks(BUFFER_CHUNKS);
     await this.waitForBuffer();
   }
 
@@ -170,7 +184,7 @@ export default class LiveStreamInstance extends EventListenerBase<{
 
     const source = this.audioContext.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(this.audioContext.destination);
+    source.connect(this.volumeGain);
 
     source.addEventListener('ended', () => {
       source.disconnect();
@@ -236,13 +250,13 @@ class ChunkBuffer extends EventListenerBase<{
     this.streamEnded = true;
   }
 
-  public enqueueLoadingChunks(n: number) {
+  private enqueueLoadingChunks(n: number) {
     for(let i = 0; i < n; i++) {
       this.enqueueLoadingChunk();
     }
   }
 
-  public enqueueLoadingChunk() {
+  private enqueueLoadingChunk() {
     const time = this.lastChunkTimestamp + BigInt(CHUNK_DURATION);
     this.lastChunkTimestamp = time;
     const promise = this.loadChunk(time) as VideoStreamPartPromise;

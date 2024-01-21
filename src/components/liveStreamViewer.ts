@@ -20,6 +20,7 @@ import LiveStreamCreds from './groupCall/liveStreamCreds';
 import {_i18n, I18n} from '../lib/langPack';
 import {ButtonMenuItemOptionsVerifiable} from './buttonMenu';
 import VolumeSelector from './volumeSelector';
+import appMediaPlaybackController, {AppMediaPlaybackController} from './appMediaPlaybackController';
 
 const VIDEO_RATIO = 16 / 9; // CSS is not reliable
 const ALLOWED_TIME_DIFF = 0.1;
@@ -42,6 +43,8 @@ export default class LiveStreamViewer {
 
   private resizeObserver: ResizeObserver;
   private readonly listenerSetter = new ListenerSetter();
+
+  private releaseSingleMedia: ReturnType<AppMediaPlaybackController['setSingleMedia']>;
 
   private loadingAnimation?: ShineAnimationCanvas = new ShineAnimationCanvas(
     'stream-player-loading-canvas',
@@ -76,6 +79,14 @@ export default class LiveStreamViewer {
 
     this.loadingAnimation.runInfinite();
 
+    this.video.addEventListener('enterpictureinpicture', () => {
+      this.onPictureInPictureChange(true);
+    });
+
+    this.video.addEventListener('leavepictureinpicture', () => {
+      this.onPictureInPictureChange(false);
+    });
+
     connectionPromise.then(() => {
       liveStreamController.liveStream.addEventListener('oops', this.showOops.bind(this));
 
@@ -99,7 +110,7 @@ export default class LiveStreamViewer {
 
     const explanation = document.createElement('div');
     explanation.classList.add('stream-player-oops-explanation');
-    _i18n(title, 'LiveStream.MediaViewer.Failed.Description');
+    _i18n(explanation, 'LiveStream.MediaViewer.Failed.Description');
 
     const textWrapper = document.createElement('div');
     textWrapper.classList.add('stream-player-oops-text-wrapper');
@@ -122,6 +133,18 @@ export default class LiveStreamViewer {
     this.streamPlayer.style.height = `${height}px`;
   }
 
+  private onPictureInPictureChange = (pip: boolean) => {
+    this.streamPlayer.classList.toggle('hidden', pip);
+
+    this.underlay.toggleWholeActive(!pip);
+    this.underlay.toggleOverlay(!pip);
+
+    if(!pip) {
+      this.updateView();
+      this.video.play();
+    }
+  }
+
   private toggleFullScreen() {
     if(!document.fullscreenElement) {
       this.streamPlayer.requestFullscreen();
@@ -131,7 +154,7 @@ export default class LiveStreamViewer {
   }
 
   private updateCall(groupCall?: GroupCall) {
-    if(liveStreamController?.groupCall.id !== groupCall.id) return;
+    if(liveStreamController?.groupCall?.id !== groupCall.id) return;
 
     if(groupCall?._ === 'groupCall') {
       const participantsCount = Math.max(0, groupCall.participants_count);
@@ -143,6 +166,7 @@ export default class LiveStreamViewer {
   }
 
   private async play() {
+    this.releaseSingleMedia = appMediaPlaybackController.setSingleMedia(this.video);
     const liveStream = liveStreamController.liveStream;
 
     if(!liveStream) {
@@ -156,10 +180,6 @@ export default class LiveStreamViewer {
     });
 
     this.video.addEventListener('waiting', () => {
-      this.onStopPlaying();
-    });
-
-    this.video.addEventListener('pause', () => {
       this.onStopPlaying();
     });
 
@@ -179,7 +199,6 @@ export default class LiveStreamViewer {
   private onStartPlaying = () => {
     this.isPlaying = true;
     this.updateView();
-    this.hideOops();
   }
 
   private onStopPlaying = () => {
@@ -194,6 +213,9 @@ export default class LiveStreamViewer {
       this.loadingAnimation.stop();
     } else {
       this.loadingAnimation.runInfinite();
+    }
+    if(this.isPlaying) {
+      this.hideOops();
     }
   }
 
@@ -297,6 +319,7 @@ export default class LiveStreamViewer {
     });
 
     this.resizeObserver.disconnect();
+    this.releaseSingleMedia?.();
 
     liveStreamController.leaveLiveStream(discard);
     return promise;
@@ -332,7 +355,7 @@ export default class LiveStreamViewer {
 
   private createStreamPlayer() {
     const player = document.createElement('div');
-    player.classList.add('stream-player');
+    player.classList.add('stream-player', 'default');
 
     this.video = document.createElement('video');
     this.video.classList.add('stream-player-video');
@@ -351,14 +374,21 @@ export default class LiveStreamViewer {
     this.liveBadge.classList.add('stream-player-live-badge');
     _i18n(this.liveBadge, 'LiveStream.MediaViewer.Live');
 
-    const soundBtn = ButtonIcon('volume_up', {noRipple: true});
+    const volumeSelector = new VolumeSelector(this.listenerSetter);
+
+    volumeSelector.btn.classList.remove('btn-icon');
 
     this.watchingCounter = document.createElement('div');
     this.watchingCounter.classList.add('stream-player-watching-counter');
 
-    controlsLeft.append(this.liveBadge, soundBtn, this.watchingCounter);
+    controlsLeft.append(this.liveBadge, volumeSelector.btn, this.watchingCounter);
 
     const pipBtn = ButtonIcon('pip', {noRipple: true});
+
+    attachClickEvent(pipBtn, () => {
+      this.video.requestPictureInPicture();
+    });
+
     const fullScreenBtn = ButtonIcon('fullscreen', {noRipple: true});
 
     attachClickEvent(fullScreenBtn, () => {

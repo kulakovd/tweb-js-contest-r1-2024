@@ -6,6 +6,7 @@ import rootScope from '../../lib/rootScope';
 import Chat from './chat';
 import {attachClickEvent} from '../../helpers/dom/clickEvent';
 import {ShineAnimationCanvas} from '../shineAnimationCanvas';
+import liveStreamController from '../../lib/calls/liveStreamController';
 
 const JOIN_BTN_ANIMATION_DELAY = 200;
 
@@ -43,8 +44,12 @@ export default class ChatStreamBar {
       await this.updateCall(groupCall, animateBtn);
     });
 
+    listenerSetter.add(liveStreamController)('connect', () => {
+      this.hide();
+    });
+
     this.container = document.createElement('div');
-    this.container.classList.add('sidebar-header', 'stream-bar', 'hide');
+    this.container.classList.add('sidebar-header', 'stream-bar', 'stream-bar-hide');
 
     const gradient = document.createElement('div');
     gradient.classList.add('stream-bar-gradient');
@@ -113,7 +118,7 @@ export default class ChatStreamBar {
     if(groupCall && isLiveStream) {
       const participantsCount = Math.max(0, groupCall.participants_count);
 
-      this.container.classList.remove('hide');
+      this.container.classList.remove('stream-bar-hide');
       _i18n(this.watchingCounter, 'LiveStream.Bar.Watching', [participantsCount]);
 
       if(animateBtn) {
@@ -125,7 +130,7 @@ export default class ChatStreamBar {
   }
 
   private hide() {
-    this.container.classList.add('hide');
+    this.container.classList.add('stream-bar-hide');
     this.callId = undefined;
   }
 }

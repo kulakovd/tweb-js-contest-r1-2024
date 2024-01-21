@@ -30,7 +30,7 @@
 
 body.is-calling {
   .topbar {
-    &, 
+    &,
     &-call-container {
       transform: translateY(0);
     }
@@ -47,7 +47,7 @@ body.is-calling {
 
   &:not(.backwards) {
     .topbar {
-      &, 
+      &,
       &-call-container {
         transform: translateY(var(--topbar-call-height));
       }
@@ -55,6 +55,37 @@ body.is-calling {
 
     &:not(.animating) {
       --topbar-floating-call-height: var(--topbar-call-height);
+    }
+  }
+}
+
+body.is-live-stream-connected {
+  .topbar {
+    &,
+    &-live-stream-container {
+      transform: translateY(0);
+    }
+  }
+
+  &.animation-level-2 {
+    .topbar {
+      &,
+      &-live-stream-container {
+        transition: transform var(--transition-standard-out);
+      }
+    }
+  }
+
+  &:not(.backwards) {
+    .topbar {
+      &,
+      &-live-stream-container {
+        transform: translateY(var(--topbar-live-stream-height));
+      }
+    }
+
+    &:not(.animating) {
+      --topbar-floating-call-height: var(--topbar-live-stream-height);
     }
   }
 }
@@ -67,13 +98,13 @@ body.is-right-column-shown {
 
 .topbar {
   --topbar-height: 3.5rem;
-  
+
   --pinned-floating-audio-height: 0px;
   --pinned-floating-message-height: 0px;
   --pinned-floating-requests-height: 0px;
   --pinned-floating-actions-height: 0px;
 	--pinned-floating-height: calc(var(--pinned-floating-audio-height) + var(--pinned-floating-message-height) + var(--pinned-floating-requests-height) + var(--pinned-floating-actions-height) + var(--topbar-floating-call-height));
-  
+
   --pinned-container-height: 3.25rem;
 	--pinned-audio-height: var(--pinned-container-height);
 	--pinned-message-height: var(--pinned-container-height);
@@ -198,7 +229,7 @@ body.is-right-column-shown {
 		}
 	}
 
-	.peer-title, 
+	.peer-title,
 	.info {
 		@include text-overflow();
 		line-height: var(--line-height);
@@ -219,7 +250,7 @@ body.is-right-column-shown {
 			margin-inline-start: 0;
 		}
 	}
-	
+
 	.chat-info {
 		flex: 1 1 auto;
 		overflow: hidden;
@@ -231,7 +262,7 @@ body.is-right-column-shown {
 		@include respond-to(handhelds) {
 			padding-inline-start: 52px;
     }
-		
+
 		//&.have-utils-width {
 			max-width: calc(100% - var(--utils-width));
 
@@ -284,14 +315,14 @@ body.is-right-column-shown {
 			display: none;
 		}
 	}
-	
+
 	.content {
 		flex: 1 1 auto;
 		padding-inline-start: 1.125rem;
 		max-width: 100%;
 		overflow: hidden;
 	}
-	
+
 	.person {
 		display: flex;
 		align-items: center;
@@ -305,7 +336,7 @@ body.is-right-column-shown {
 			font-size: .875rem;
 			//line-height: 18px;
 			color: var(--secondary-text-color);
-			
+
 			.online {
 				color: var(--primary-color);
 			}
@@ -378,7 +409,7 @@ body.is-right-column-shown {
           .topbar-call-right {
             width: auto;
           }
-  
+
           .group-call-description {
             display: none;
           }
@@ -399,7 +430,7 @@ body.is-right-column-shown {
       }
     }
 
-    &-left, 
+    &-left,
     &-right {
       flex: 0 0 auto;
       width: 12rem;
@@ -468,5 +499,52 @@ body.is-right-column-shown {
     @include respond-to(not-handhelds) {
       display: none;
     }
+  }
+}
+
+.topbar-live-stream {
+  &-container {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    width: 100%;
+    height: 27px;
+    background: linear-gradient(90deg, #4588E3 -10.53%, #976FFF 53.6%, #E46ACE 104.82%), #FFF;
+    top: -27px;
+    z-index: 1;
+  }
+
+  &-live {
+    color: #FFF;
+    font-family: Roboto Condensed, Roboto, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+  }
+
+  &-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+  }
+
+  &-chat-name {
+    color: #FFF;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 21px;
+  }
+
+  &-watching {
+    color: rgba(255, 255, 255, 0.60);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 21px;
   }
 }

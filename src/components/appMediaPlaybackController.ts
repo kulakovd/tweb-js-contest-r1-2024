@@ -934,7 +934,7 @@ export class AppMediaPlaybackController extends EventListenerBase<{
     }
 
     this.willBePlayed(undefined);
-    if(media) this.setMedia(media, message);
+    if(media && message) this.setMedia(media, message);
     else this.playingMedia = undefined;
     this.toggleSwitchers(false);
 

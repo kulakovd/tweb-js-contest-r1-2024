@@ -118,6 +118,7 @@ import PopupWebApp from '../../components/popups/webApp';
 import {getPeerColorIndexByPeer, getPeerColorsByPeer, setPeerColors} from './utils/peers/getPeerColorById';
 import liveStreamController from '../calls/liveStreamController';
 import LiveStreamViewer from '../../components/liveStreamViewer';
+import {TopbarLiveStream} from '../../components/topbarLiveStream';
 
 export type ChatSavedPosition = {
   mids: number[],
@@ -172,6 +173,7 @@ export class AppImManager extends EventListenerBase<{
   private backgroundPromises: {[slug: string]: Promise<string>};
 
   private topbarCall: TopbarCall;
+  private topbarLiveStream: TopbarLiveStream;
 
   private lastBackgroundUrl: string;
 
@@ -547,6 +549,8 @@ export class AppImManager extends EventListenerBase<{
     if(IS_CALL_SUPPORTED || IS_GROUP_CALL_SUPPORTED) {
       this.topbarCall = new TopbarCall(managers);
     }
+
+    this.topbarLiveStream = new TopbarLiveStream(managers);
 
     if(IS_CALL_SUPPORTED) {
       callsController.addEventListener('instance', ({instance/* , hasCurrent */}) => {
@@ -1436,7 +1440,7 @@ export class AppImManager extends EventListenerBase<{
       const fullCall = await this.managers.appGroupCallsManager.getGroupCallFull(call.id);
       const isLiveStream = fullCall?._ === 'groupCall' && fullCall.pFlags.rtmp_stream
       if(isLiveStream) {
-        const connectionPromise = liveStreamController.joinLiveStream(call.id);
+        const connectionPromise = liveStreamController.joinLiveStream(chatId, call.id);
         new LiveStreamViewer(peerId, connectionPromise, this.managers, this).open();
       } else {
         groupCallsController.joinGroupCall(chatId, call.id, true, false);

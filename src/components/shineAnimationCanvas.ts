@@ -106,6 +106,7 @@ export class ShineAnimationCanvas {
 
   private cancel() {
     cancelAnimationFrame(this.animationFrameId);
+    this.animationFrameId = undefined;
     this.start = undefined;
   }
 
