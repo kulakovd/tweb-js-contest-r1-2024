@@ -14,6 +14,7 @@ import {DownloadOptions, MyUploadFile} from '../mtproto/apiFileManager';
 import {getMtprotoMessagePort, log, serviceMessagePort} from './index.service';
 import {ServiceRequestFilePartTaskPayload} from './serviceMessagePort';
 import timeout from './timeout';
+import {fixASC} from './fixASC';
 
 const deferredPromises: Map<MessagePort, {[taskId: string]: CancellablePromise<MyUploadFile>}> = new Map();
 const cacheStorage = new CacheStorageController('cachedStreamChunks');
@@ -236,6 +237,10 @@ class Stream {
       // if(isSafari) {
       if(offset !== alignedOffset || end !== (alignedOffset + limit)) {
         ab = ab.slice(offset - alignedOffset, end - alignedOffset + 1);
+      }
+
+      if(this.info.mimeType === 'video/mp4') {
+        fixASC(ab.buffer)
       }
 
       const headers: Record<string, string> = {
