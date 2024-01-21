@@ -114,7 +114,7 @@ export default class ChatStreamBar {
       const participantsCount = Math.max(0, groupCall.participants_count);
 
       this.container.classList.remove('hide');
-      _i18n(this.watchingCounter, 'LiveStream.Bar.Watching', [groupCall.participants_count]);
+      _i18n(this.watchingCounter, 'LiveStream.Bar.Watching', [participantsCount]);
 
       if(animateBtn) {
         await this.joinAnimation.runOnce(JOIN_BTN_ANIMATION_DELAY);
