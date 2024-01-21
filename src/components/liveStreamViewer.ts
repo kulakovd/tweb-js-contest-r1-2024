@@ -171,7 +171,6 @@ export default class LiveStreamViewer {
 
     liveStream.addEventListener('timeupdate', (t) => {
       this.video.currentTime = t;
-      this.video.play();
     });
   }
 
@@ -214,6 +213,7 @@ export default class LiveStreamViewer {
     const ctx = canvas.getContext('2d')!;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const url = canvas.toDataURL();
+    if(url === 'data:,') return; // blank frame
     this.thumb.style.setProperty('--thumb', `url(${url})`);
     liveStreamController.liveStream?.saveLastFrame(url);
   }
@@ -249,7 +249,7 @@ export default class LiveStreamViewer {
     if(lastFrame) {
       this.setThumbFromUrl(lastFrame);
     } else {
-      this.setThumbFromAvatar(this.peerId);
+      await this.setThumbFromAvatar(this.peerId);
     }
 
     this.navigationItem = {
@@ -334,6 +334,7 @@ export default class LiveStreamViewer {
 
     this.video = document.createElement('video');
     this.video.classList.add('stream-player-video');
+    this.video.setAttribute('autoplay', '');
 
     const controlsBar = document.createElement('div');
     controlsBar.classList.add('stream-player-controls');

@@ -52,6 +52,7 @@ export class LiveStreamController {
     if(!this.groupCall) return;
 
     this.liveStream?.disconnect();
+    this.liveStream = undefined;
     await this.managers.appGroupCallsManager.hangUp(this.groupCall.id, discard ? true : this.ssrc);
     this.audioAsset.playSound('group_call_end.mp3');
   }
