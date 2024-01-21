@@ -19,8 +19,10 @@ import {AppManagers} from '../lib/appManagers/managers';
 import LiveStreamCreds from './groupCall/liveStreamCreds';
 import {_i18n, I18n} from '../lib/langPack';
 import {ButtonMenuItemOptionsVerifiable} from './buttonMenu';
+import VolumeSelector from './volumeSelector';
 
 const VIDEO_RATIO = 16 / 9; // CSS is not reliable
+const ALLOWED_TIME_DIFF = 0.1;
 
 export default class LiveStreamViewer {
   protected navigationItem: NavigationItem;
@@ -39,7 +41,7 @@ export default class LiveStreamViewer {
   private isPlaying: boolean = false;
 
   private resizeObserver: ResizeObserver;
-  private readonly listenerSetter: ListenerSetter;
+  private readonly listenerSetter = new ListenerSetter();
 
   private loadingAnimation?: ShineAnimationCanvas = new ShineAnimationCanvas(
     'stream-player-loading-canvas',
@@ -58,8 +60,6 @@ export default class LiveStreamViewer {
     private managers: AppManagers,
     private appImManager: AppImManager
   ) {
-    this.listenerSetter = new ListenerSetter();
-
     this.listenerSetter.add(rootScope)('group_call_update', this.updateCall.bind(this));
 
     this.underlay = new AppMediaViewerUnderlay(['forward']);
@@ -170,7 +170,9 @@ export default class LiveStreamViewer {
     await liveStream.initStream();
 
     liveStream.addEventListener('timeupdate', (t) => {
-      this.video.currentTime = t;
+      if(Math.abs(this.video.currentTime - t) > ALLOWED_TIME_DIFF) {
+        this.video.currentTime = t;
+      }
     });
   }
 

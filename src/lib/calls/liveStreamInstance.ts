@@ -69,7 +69,7 @@ export default class LiveStreamInstance extends EventListenerBase<{
     this.buffer.clearBuffer();
 
     const channel = await this.getVideoChannel();
-    const startTimestamp = BigInt(channel.last_timestamp_ms) - BigInt(BUFFER_CHUNKS + 1) * BigInt(CHUNK_DURATION);
+    const startTimestamp = BigInt(channel.last_timestamp_ms) - BigInt(BUFFER_CHUNKS) * BigInt(CHUNK_DURATION);
 
     if(startTimestamp === undefined) {
       throw new Error('Invalid start timestamp');
@@ -119,9 +119,8 @@ export default class LiveStreamInstance extends EventListenerBase<{
     await this.buffer.waitForFirstChunk();
     const first = await this.buffer.chunks[0];
     const videoBuffer = this.mediaSource.addSourceBuffer(`video/mp4; codecs="${first.videoCodec}"`);
-    videoBuffer.mode = 'sequence';
 
-    const appendQueue: VideoStreamPart[] = [];
+    const appendQueue: VideoStreamPart[] = await Promise.all(this.buffer.chunks.slice());
 
     const getBufferedAhead = () => {
       const currentTime = this.audioContext.currentTime;
@@ -165,7 +164,6 @@ export default class LiveStreamInstance extends EventListenerBase<{
     source.addEventListener('ended', () => {
       source.disconnect();
       this.buffer.dropChunk(chunk.timestamp);
-      this.buffer.enqueueLoadingChunk();
     });
     source.start(when);
   };
@@ -203,6 +201,7 @@ class ChunkBuffer extends EventListenerBase<{
 
   public dropChunk(timestamp: bigint) {
     this.chunks = this.chunks.filter(chunk => chunk.timestamp !== timestamp);
+    this.fillBuffer();
   }
 
   public async waitForFirstChunk(): Promise<VideoStreamPart> {
@@ -245,6 +244,7 @@ class ChunkBuffer extends EventListenerBase<{
   }
 
   private async loadChunk(time: bigint, attempt = 1): Promise<VideoStreamPart> {
+    await this.initPromise;
     if(attempt > 3) {
       throw new Error('Too many attempts');
     }
