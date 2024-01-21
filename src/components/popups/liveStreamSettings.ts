@@ -22,7 +22,8 @@ export default class PopupLiveStreamSettings extends PopupElement {
       body: true,
       title: true,
       withConfirm: true,
-      footer: true
+      footer: true,
+      preventNightMode: true
     });
 
     const listenerSetter = new ListenerSetter();
@@ -85,10 +86,14 @@ export default class PopupLiveStreamSettings extends PopupElement {
     const revokeKeyBtn = document.createElement('button');
     revokeKeyBtn.className = 'popup-live-stream-settings-revoke btn-primary btn-transparent danger';
     revokeKeyBtn.append(revokeIcon, 'Revoke Stream Key');
-    attachClickEvent(revokeKeyBtn, async() => {
-      const rtmp = await this.managers.appGroupCallsManager.getGroupCallStreamRtmpUrl(this.peerId, true);
-      this.streamCreds.updateWith(rtmp);
+    attachClickEvent(revokeKeyBtn, () => {
+      this.revokeKey();
     });
     return revokeKeyBtn;
+  }
+
+  private async revokeKey() {
+    const rtmp = await this.managers.appGroupCallsManager.getGroupCallStreamRtmpUrl(this.peerId, true);
+    this.streamCreds.updateWith(rtmp);
   }
 }

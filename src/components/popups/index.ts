@@ -51,7 +51,8 @@ export type PopupOptions = Partial<{
   scrollable: boolean,
   buttons: Array<PopupButton>,
   title: boolean | LangPackKey | DocumentFragment | HTMLElement,
-  floatingHeader: boolean
+  floatingHeader: boolean,
+  preventNightMode: boolean
 }>;
 
 export interface PopupElementConstructable<T extends PopupElement = any> {
@@ -116,7 +117,7 @@ export default class PopupElement<T extends EventListenerListeners = {}> extends
     this.element.className = 'popup' + (className ? ' ' + className : '');
     this.container.classList.add('popup-container', 'z-depth-1');
 
-    if(overlayCounter.isDarkOverlayActive) {
+    if(overlayCounter.isDarkOverlayActive && !options.preventNightMode) {
       this.night = true;
       this.element.classList.add('night');
     }

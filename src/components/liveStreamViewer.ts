@@ -21,6 +21,7 @@ import {_i18n, I18n} from '../lib/langPack';
 import {ButtonMenuItemOptionsVerifiable} from './buttonMenu';
 import VolumeSelector from './volumeSelector';
 import appMediaPlaybackController, {AppMediaPlaybackController} from './appMediaPlaybackController';
+import {PopupOutputDevice} from './popups/outputDevice';
 
 const VIDEO_RATIO = 16 / 9; // CSS is not reliable
 const ALLOWED_TIME_DIFF = 0.1;
@@ -329,7 +330,9 @@ export default class LiveStreamViewer {
     {
       icon: 'volume_up',
       text: 'LiveStream.MediaViewer.Menu.Option.OutputDevice',
-      onClick: () => {}
+      onClick: () => {
+        PopupElement.createPopup(PopupOutputDevice);
+      }
     },
     {
       icon: 'radioon',
@@ -340,7 +343,7 @@ export default class LiveStreamViewer {
       icon: 'settings',
       text: 'LiveStream.MediaViewer.Menu.Option.StreamSettings',
       onClick: () => {
-        PopupElement.createPopup(PopupLiveStreamSettings, true, this.peerId, this.appImManager)
+        PopupElement.createPopup(PopupLiveStreamSettings, true, this.peerId, this.appImManager);
       }
     },
     {

@@ -44,6 +44,19 @@ export default class LiveStreamInstance extends EventListenerBase<{
 
   private buffer: ChunkBuffer;
 
+  public setAudioOutputDeviceId(id: string) {
+    if('setSinkId' in (this.audioContext as any)) {
+      (this.audioContext as any).setSinkId(id);
+    }
+  }
+
+  get audioOutputDeviceId(): string {
+    if('sinkId' in (this.audioContext as any)) {
+      return (this.audioContext as any).sinkId;
+    }
+    return '';
+  }
+
   constructor(
     private managers: AppManagers,
     private call: GroupCall.groupCall

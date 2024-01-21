@@ -1,0 +1,37 @@
+.popup-output-device {
+  & .popup-header {
+    margin-bottom: 8px;
+  }
+
+  &-check {
+    color: white;
+    display: none;
+  }
+
+  &-item {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 16px;
+    gap: 32px;
+  }
+
+  &-radio {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #8F969B;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  input[type="radio"]:checked + .popup-output-device-radio {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+
+    .popup-output-device-check {
+      display: block;
+    }
+  }
+}
