@@ -27,6 +27,8 @@ export default class LiveStreamInstance extends EventListenerBase<{
   public mediaSrc: string = URL.createObjectURL(this.mediaSource);
   private streamEnded: boolean = false;
 
+  private firstLoadedOffset: number = -1;
+
   private readonly streamDcId: number;
 
   private startTimestamp: bigint = BigInt(0);
@@ -135,7 +137,7 @@ export default class LiveStreamInstance extends EventListenerBase<{
     const appendVideo = async() => {
       if(appendQueue.length > 0 && !videoBuffer.updating) {
         const chunk = appendQueue.shift();
-        const when = Number((chunk.timestamp - this.startTimestamp) / BigInt(1000));
+        const when = Number((chunk.timestamp - this.startTimestamp) / BigInt(1000)) + this.firstLoadedOffset;
         videoBuffer.timestampOffset = when;
         videoBuffer.appendBuffer(chunk.videoMediaSegment);
       }
@@ -155,16 +157,26 @@ export default class LiveStreamInstance extends EventListenerBase<{
   }
 
   private async appendAudio(chunk: VideoStreamPart) {
+    await this.buffer.waitForBuffer();
     if(this.audioContext.state === 'closed') return;
+
+    if(this.firstLoadedOffset === -1) {
+      this.firstLoadedOffset = this.audioContext.currentTime;
+    }
+
     const {audioBuffer} = chunk;
+
+    const when = Number((chunk.timestamp - this.startTimestamp) / BigInt(1000)) + this.firstLoadedOffset;
+
     const source = this.audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(this.audioContext.destination);
-    const when = Number((chunk.timestamp - this.startTimestamp) / BigInt(1000));
+
     source.addEventListener('ended', () => {
       source.disconnect();
       this.buffer.dropChunk(chunk.timestamp);
     });
+
     source.start(when);
   };
 }
@@ -187,6 +199,7 @@ class ChunkBuffer extends EventListenerBase<{
     private call: GroupCall.groupCall
   ) {
     super();
+    // when lastChunkTimestamp is set, initPromise is resolved
     this.initPromise = new Promise(resolve => this.resolveInitPromise = resolve);
   }
 
