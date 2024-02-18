@@ -1,9 +1,10 @@
 This is a submission for [Telegram contest for JS Developers](https://t.me/contest/357). [Tasks description](https://contest.com/docs/JS-Contest-2024-r1). 
+
 The application is available [online](https://entry5303-js2024r1.usercontent.dev).
 
 ## How tasks are implemented
 
-Part 1 (Live Streaming)
+### Part 1 (Live Streaming)
 
 I used Media Source API for video and Web Audio API.
 They are played separately and sync if one gets behind another,
@@ -21,7 +22,7 @@ Decoded audio is appended to AudioBuffer connected to AudioContext.
 
 Before starting playback, first 3 parts (3 seconds) are buffered.
 
-Part 2 (Chromium Issue Workaround)
+### Part 2 (Chromium Issue Workaround)
 
 Bug is related to reading AudioSpecificConfig.
 ASC contains information about channel count.
@@ -35,10 +36,10 @@ It works also for 0b0010 that is 2, but only left channel is played. (The silenc
 
 mp4a box still contains 1 channel count.
 
-Added Dependencies
+### Added Dependencies
 
-mp4box.js - https://github.com/gpac/mp4box.js
-opus-decoder - https://www.npmjs.com/package/opus-decoder
+- mp4box.js - https://github.com/gpac/mp4box.js
+- opus-decoder - https://www.npmjs.com/package/opus-decoder
 
 ## Telegram Web K
 Based on Webogram, patched and improved. Available for everyone here: https://web.telegram.org/k/
