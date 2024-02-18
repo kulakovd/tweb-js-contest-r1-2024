@@ -1,0 +1,8 @@
+import{a as o,e as t,g as r,_ as a,l as s}from"./index-Yw60JL7x.js";import{P as l}from"./page-P467gKR2.js";const n=()=>(o.managers.appStateManager.pushToState("authState",{_:"authStateSignedIn"}),t.requestedServerLanguage||t.getCacheLangPack().then(e=>{e.local&&t.getLangPack(e.lang_code)}),i.pageEl.style.display="",r(),Promise.all([a(()=>import("./appDialogsManager-Jkm2FcUi.js"),__vite__mapDeps([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]),import.meta.url),s(),"requestVideoFrameCallback"in HTMLVideoElement.prototype?Promise.resolve():a(()=>import("./requestVideoFrameCallbackPolyfill-GsYXQx88.js"),__vite__mapDeps([]),import.meta.url)]).then(([e])=>{e.default.start(),setTimeout(()=>{document.getElementById("auth-pages").remove()},1e3)})),i=new l("page-chats",!1,n);export{i as default};
+//# sourceMappingURL=pageIm-ExYDA_eB.js.map
+function __vite__mapDeps(indexes) {
+  if (!__vite__mapDeps.viteFileDeps) {
+    __vite__mapDeps.viteFileDeps = ["./appDialogsManager-Jkm2FcUi.js","./avatar-2K_LVvYS.js","./button-pyLkgSzA.js","./index-Yw60JL7x.js","./index-SxwPfyjR.css","./page-P467gKR2.js","./wrapEmojiText-3c4gTI9W.js","./scrollable-7JhYYq00.js","./putPreloader--0audIx4.js","./htmlToSpan-NrVXttdb.js","./countryInputField-e8G1ooyg.js","./textToSvgURL-Z4O-nL1S.js","./_commonjsHelpers-5-cIlDoe.js","./codeInputField-jpFEWpDo.js","./appDialogsManager-6QNcK96s.css"]
+  }
+  return indexes.map((i) => __vite__mapDeps.viteFileDeps[i])
+}
