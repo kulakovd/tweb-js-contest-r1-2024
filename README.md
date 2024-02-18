@@ -1,3 +1,45 @@
+This is a submission for [Telegram contest for JS Developers](https://t.me/contest/357). [Tasks description](https://contest.com/docs/JS-Contest-2024-r1). 
+The application is available [online](https://entry5303-js2024r1.usercontent.dev).
+
+## How tasks are implemented
+
+Part 1 (Live Streaming)
+
+I used Media Source API for video and Web Audio API.
+They are played separately and sync if one gets behind another,
+that usually happens when browser stops video when tab becomes invisible.
+
+Each loaded part of live stream handled with mp4box.
+mp4box gets initialization and media segments for video.
+Also, mp4box extracts all audio samples form the chunk.
+Samples are decoded to PCM using opus-decoder.
+
+Initialization segment of the first part is used when creating SourceBuffer.
+
+Media segment is appended to SourceBuffer.
+Decoded audio is appended to AudioBuffer connected to AudioContext.
+
+Before starting playback, first 3 parts (3 seconds) are buffered.
+
+Part 2 (Chromium Issue Workaround)
+
+Bug is related to reading AudioSpecificConfig.
+ASC contains information about channel count.
+
+I find ASC in each video/mp4 streamed from ServiceWorker.
+If ASC is found and equal to 0x1388,
+I replace it with 0x1398.
+
+This sets channel count in ASC to 0b0011 that is 3.
+It works also for 0b0010 that is 2, but only left channel is played. (The silence is played on right channel)
+
+mp4a box still contains 1 channel count.
+
+Added Dependencies
+
+mp4box.js - https://github.com/gpac/mp4box.js
+opus-decoder - https://www.npmjs.com/package/opus-decoder
+
 ## Telegram Web K
 Based on Webogram, patched and improved. Available for everyone here: https://web.telegram.org/k/
 
